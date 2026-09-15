@@ -2,6 +2,36 @@ button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* Keep the previous price unmistakably separate from the current offer price. */
+.product-card .price-row {
+  align-items: flex-end;
+}
+.product-card .price-stack {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 7px;
+  row-gap: 1px;
+  line-height: 1.15;
+}
+.product-card .price-stack del {
+  grid-column: 1 / -1;
+  width: max-content;
+  color: #7b827e;
+  font-size: 16px;
+  font-weight: 650;
+  text-decoration-line: line-through;
+  text-decoration-color: #c33428;
+  text-decoration-thickness: 2px;
+}
+.product-card .price-stack strong {
+  font-size: 28px;
+  line-height: 1;
+}
+.product-card .price-stack small {
+  white-space: nowrap;
+}
 .cart-button,
 .benefits article,
 .benefits article > div {
