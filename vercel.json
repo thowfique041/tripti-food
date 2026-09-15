@@ -19,11 +19,18 @@
       }
     },
     {
-      "source": "/(.*)",
+      "source": "/admin",
       "destination": {
         "type": "service",
         "service": "frontend",
-        "path": "/"
+        "path": "/index.html"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "frontend"
       }
     }
   ]
