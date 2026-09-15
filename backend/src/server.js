@@ -1,0 +1,2 @@
+import mongoose from"mongoose";import{createApp}from"./app.js";import{config,validateConfig}from"./config.js";
+validateConfig();await mongoose.connect(config.mongoUri,{serverSelectionTimeoutMS:10000});const server=createApp().listen(config.port,()=>console.log(`Tripti Food API listening on ${config.port}`));async function shutdown(){server.close();await mongoose.disconnect();process.exit(0)}process.on("SIGTERM",shutdown);process.on("SIGINT",shutdown);

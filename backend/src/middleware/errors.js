@@ -1,0 +1,2 @@
+export function notFound(req,res){res.status(404).json({message:"পাওয়া যায়নি।"})}
+export function errorHandler(err,req,res,next){console.error(err.name,err.message);if(err.name==="ValidationError")return res.status(422).json({message:Object.values(err.errors)[0]?.message||"তথ্য সঠিক নয়।"});if(err.code===11000)return res.status(409).json({message:"এই তথ্যটি আগে থেকেই আছে।"});res.status(err.status||500).json({message:err.status?err.message:"সার্ভারে সাময়িক সমস্যা হয়েছে।"})}

@@ -1,0 +1,2 @@
+import jwt from"jsonwebtoken";import{config}from"../config.js";
+export function requireAdmin(req,res,next){const h=req.get("authorization")||"";if(!h.startsWith("Bearer "))return res.status(401).json({message:"অনুমতি নেই।"});try{const data=jwt.verify(h.slice(7),config.jwtSecret,{algorithms:["HS256"]});if(data.role!=="admin")throw new Error();req.admin=data;next()}catch{return res.status(401).json({message:"Session শেষ হয়েছে। আবার login করুন।"})}}

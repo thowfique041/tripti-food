@@ -2,6 +2,8 @@
 node_modules/
 .wrangler/
 .dev.vars
+frontend/dist/
+coverage/
 
 # Secrets and local environment
 .env

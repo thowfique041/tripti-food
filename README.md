@@ -1,29 +1,53 @@
-# তৃপ্তি ফুড
+# তৃপ্তি ফুড — MERN Stack
 
-Frontend ও Cloudflare Worker/D1 backend আলাদা রাখা একটি mobile-first food commerce MVP।
+মোবাইল-ফার্স্ট বাংলা e-commerce website। React storefront এবং Node/Express/MongoDB backend আলাদা folder-এ রাখা হয়েছে।
 
-## Folder
+## Structure
 
-- `frontend/` — storefront, cart, checkout ও admin UI
-- `backend/` — API, validation, order database ও admin authentication
+- `frontend/` — React + Vite storefront, cart, checkout ও admin dashboard
+- `backend/` — Express REST API, MongoDB models, JWT admin authentication ও tests
 
-## Local run
+## Features
 
-1. `backend/`-এ `npm install`
-2. `npx wrangler d1 execute tripti-food --local --file=schema.sql`
-3. `npx wrangler d1 execute tripti-food --local --file=seed.sql`
-4. শক্তিশালী admin secret সেট করুন: `npx wrangler secret put ADMIN_TOKEN`
-5. `npm run dev`
-6. আলাদা terminal-এ `frontend/` থেকে static server চালান, যেমন `python3 -m http.server 8000`
+- Responsive catalogue, category filter, cart ও checkout
+- COD, bKash, Nagad এবং WhatsApp fallback
+- Server-side price, delivery fee ও stock validation
+- Admin login, product CRUD, store settings ও order status
+- Helmet security headers, strict CORS, request limits ও rate limits
+- Environment-only secrets; no credentials in source
 
-## Production checklist
+## Local setup
 
-1. Cloudflare D1 database তৈরি করে `backend/wrangler.jsonc`-তে database ID বসান।
-2. Remote database-এ `schema.sql` ও `seed.sql` apply করুন।
-3. `ADMIN_TOKEN` secret এবং সঠিক `ALLOWED_ORIGINS` দিন।
-4. Backend deploy করে তার URL `frontend/config.js`-এর `apiBase`-এ দিন।
-5. Frontend Cloudflare Pages-এ deploy করে custom domain connect করুন।
+Node.js 20+ এবং local MongoDB প্রয়োজন।
 
-## Demo values
+### Backend
 
-Product, price ও delivery charge demo। ফোন/WhatsApp: `01310105529`। Frontend contact `frontend/config.js`; backend delivery fee `backend/src/worker.js`-এ আছে—production admin settings যোগ করার আগে দুই জায়গায় একই মান রাখুন।
+```bash
+cd backend
+cp .env.example .env
+# .env-এ শক্তিশালী JWT_SECRET, ADMIN_EMAIL ও ADMIN_PASSWORD দিন
+npm install
+npm run seed
+npm run dev
+```
+
+API: `http://localhost:5000`
+
+### Frontend
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Website: `http://localhost:5173`
+Admin: `http://localhost:5173/admin`
+
+## Production
+
+- Frontend: Cloudflare Pages বা Vercel (`npm run build`, output `dist`)
+- Backend: Render/Railway/Node-compatible host (`npm start`)
+- Database: MongoDB Atlas
+- Production environment-এ `FRONTEND_URL`, `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL` ও `ADMIN_PASSWORD` অবশ্যই configure করুন।
