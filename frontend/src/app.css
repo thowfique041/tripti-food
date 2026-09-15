@@ -249,6 +249,66 @@ button:disabled {
   --status-bg: #f0f2f1;
   transition: background-color .2s ease;
 }
+.order-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 20px 0 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8faf9;
+}
+.order-search {
+  flex: 1 1 360px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 230px;
+  padding: 0 13px;
+  border: 1px solid #cfd8d3;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--green2);
+}
+.order-search:focus-within {
+  border-color: var(--green2);
+  box-shadow: 0 0 0 3px rgba(13,86,62,.1);
+}
+.order-search input {
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+.order-filters > select {
+  min-width: 160px;
+  padding: 10px 35px 10px 12px;
+  border: 1px solid #cfd8d3;
+  border-radius: 10px;
+  background-color: #fff;
+  color: var(--ink);
+  font-weight: 700;
+}
+.filter-count {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #e5f2eb;
+  color: var(--green2);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.order-filters > button {
+  padding: 7px 10px;
+  border: 0;
+  background: transparent;
+  color: #a13932;
+  font-weight: 700;
+  cursor: pointer;
+}
 .order-row:hover {
   background: color-mix(in srgb, var(--status-bg) 48%, white);
 }

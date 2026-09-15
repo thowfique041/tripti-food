@@ -21,6 +21,7 @@ import {
   ChevronRight,
   CircleCheck,
   MapPin,
+  Search,
 } from "lucide-react";
 import { api } from "./api";
 import { fallbackProducts, defaultSettings } from "./data";
@@ -765,6 +766,8 @@ function Admin() {
     [settings, setSettings] = useState(defaultSettings),
     [edit, setEdit] = useState(null),
     [notice, setNotice] = useState(""),
+    [orderQuery, setOrderQuery] = useState(""),
+    [orderStatus, setOrderStatus] = useState("all"),
     [module, setModule] = useState(() =>
       ["dashboard", "orders", "products", "settings"].includes(
         location.hash.slice(1),
@@ -884,7 +887,23 @@ function Admin() {
       orders: "সাম্প্রতিক অর্ডার",
       products: "পণ্যসমূহ",
       settings: "দোকানের সেটিংস",
-    };
+    },
+    normalizedOrderQuery = orderQuery.trim().toLowerCase(),
+    filteredOrders = orders.filter((order) => {
+      if (orderStatus !== "all" && order.status !== orderStatus) return false;
+      if (!normalizedOrderQuery) return true;
+      const customer = order.customer || {};
+      return [
+        order.orderNumber,
+        customer.name,
+        customer.phone,
+        customer.email,
+        customer.address,
+        order.comment,
+        order.paymentDetails?.senderNumber,
+        order.paymentDetails?.transactionId,
+      ].some((value) => String(value || "").toLowerCase().includes(normalizedOrderQuery));
+    });
   return (
     <main className="admin-shell">
       <aside className="admin-side">
@@ -985,6 +1004,32 @@ function Admin() {
                 <p>নতুন অর্ডার দেখুন এবং ডেলিভারি স্ট্যাটাস পরিবর্তন করুন।</p>
               </div>
             </div>
+            <div className="order-filters" role="search">
+              <label className="order-search">
+                <Search size={19} />
+                <input
+                  type="search"
+                  value={orderQuery}
+                  onChange={(event) => setOrderQuery(event.target.value)}
+                  placeholder="নাম, ফোন, ইমেইল, অর্ডার নম্বর বা ঠিকানা খুঁজুন"
+                  aria-label="অর্ডার বা ক্রেতা খুঁজুন"
+                />
+              </label>
+              <select
+                value={orderStatus}
+                onChange={(event) => setOrderStatus(event.target.value)}
+                aria-label="স্ট্যাটাস অনুযায়ী অর্ডার ফিল্টার করুন"
+              >
+                <option value="all">সব স্ট্যাটাস</option>
+                {Object.entries(orderStatusLabels).map(([value, label]) => (
+                  <option value={value} key={value}>{label}</option>
+                ))}
+              </select>
+              <span className="filter-count">{bn(filteredOrders.length)}টি পাওয়া গেছে</span>
+              {(orderQuery || orderStatus !== "all") && (
+                <button type="button" onClick={() => { setOrderQuery(""); setOrderStatus("all"); }}>ফিল্টার মুছুন</button>
+              )}
+            </div>
             <div className="table-wrap">
               <table>
                 <thead>
@@ -998,8 +1043,8 @@ function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.length ? (
-                    orders.map((o) => (
+                  {filteredOrders.length ? (
+                    filteredOrders.map((o) => (
                       <tr key={o._id} className={`order-row status-${o.status}`}>
                         <td>
                           {o.orderNumber}
@@ -1038,7 +1083,7 @@ function Admin() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6">এখনো কোনো অর্ডার নেই।</td>
+                      <td colSpan="6">{orders.length ? "এই ফিল্টারে কোনো অর্ডার পাওয়া যায়নি।" : "এখনো কোনো অর্ডার নেই।"}</td>
                     </tr>
                   )}
                 </tbody>
