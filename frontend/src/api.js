@@ -22,6 +22,8 @@ export const api = {
     request("/orders", { method: "POST", body: JSON.stringify(data) }),
   login: (data) =>
     request("/auth/login", { method: "POST", body: JSON.stringify(data) }),
+  changePassword: (data) =>
+    request("/auth/password", { method: "PUT", body: JSON.stringify(data) }),
   orders: () => request("/admin/orders"),
   adminProducts: () => request("/admin/products"),
   uploadImage: (file) => {

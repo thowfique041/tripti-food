@@ -79,6 +79,7 @@ export const fallbackProducts = [
   },
 ];
 export const defaultSettings = {
+  email: "",
   phone: "01310105529",
   whatsapp: "8801310105529",
   deliveryDhaka: 80,

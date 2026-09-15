@@ -3,6 +3,7 @@ node_modules/
 .wrangler/
 .dev.vars
 frontend/dist/
+backend/uploads/
 coverage/
 
 # Secrets and local environment

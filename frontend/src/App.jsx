@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { api } from "./api";
 import { fallbackProducts, defaultSettings } from "./data";
+import { readCart, reconcileCart } from "./cart";
 const money = (n) => `৳${Number(n).toLocaleString("bn-BD")}`,
   bn = (n) => Number(n).toLocaleString("bn-BD");
 const pricing = (p) => {
@@ -83,7 +84,7 @@ function useStore() {
   useEffect(() => {
     Promise.all([api.products(), api.settings()])
       .then(([p, s]) => {
-        if (p.products?.length) setProducts(p.products);
+        setProducts(Array.isArray(p.products) ? p.products : []);
         if (s.settings) setSettings(s.settings);
         setOnline(true);
       })
@@ -94,9 +95,7 @@ function useStore() {
 function Storefront() {
   const { products, settings, online } = useStore();
   const [category, setCategory] = useState("সব"),
-    [cart, setCart] = useState(() =>
-      JSON.parse(localStorage.getItem("tripti-cart") || "[]"),
-    ),
+    [cart, setCart] = useState(() => readCart(localStorage.getItem("tripti-cart"))),
     [drawer, setDrawer] = useState(false),
     [checkout, setCheckout] = useState(false),
     [selectedProduct, setSelectedProduct] = useState(null),
@@ -115,6 +114,9 @@ function Storefront() {
     () => localStorage.setItem("tripti-cart", JSON.stringify(cart)),
     [cart],
   );
+  useEffect(() => {
+    if (online) setCart((current) => reconcileCart(current, products, fallbackProducts));
+  }, [online, products]);
   useEffect(() => {
     if (heroIndex >= heroProducts.length) setHeroIndex(0);
   }, [heroIndex, heroProducts.length]);
@@ -399,6 +401,7 @@ function Storefront() {
           <div>
             <h3>যোগাযোগ</h3>
             <a href={`tel:${settings.phone}`}>{settings.phone}</a>
+            {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
             <a href={wa}>WhatsApp</a>
             <span>{settings.address}</span>
           </div>
@@ -470,13 +473,13 @@ function Storefront() {
               <small>চেকআউটে ডেলিভারি চার্জ যোগ হবে</small>
               <button
                 className="button primary full"
-                disabled={!detailed.length}
+                disabled={!detailed.length || !online}
                 onClick={() => {
                   setDrawer(false);
                   setCheckout(true);
                 }}
               >
-                চেকআউট করুন
+                {online ? "চেকআউট করুন" : "সার্ভারের জন্য অপেক্ষা করুন"}
               </button>
             </div>
           </aside>
@@ -697,6 +700,7 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
               <textarea
                 name="comment"
                 maxLength="500"
+                autoComplete="off"
                 placeholder="বিশেষ নির্দেশনা থাকলে লিখুন"
               />
             </label>
@@ -1061,6 +1065,7 @@ function Admin() {
                 e.preventDefault();
                 const f = new FormData(e.currentTarget);
                 await api.updateSettings({
+                  email: f.get("email"),
                   phone: f.get("phone"),
                   whatsapp: f.get("whatsapp"),
                   address: f.get("address"),
@@ -1071,6 +1076,10 @@ function Admin() {
                 load();
               }}
             >
+              <label>
+                ইমেইল
+                <input name="email" type="email" required maxLength="120" defaultValue={settings.email || ""} />
+              </label>
               <label>
                 ফোন
                 <input name="phone" defaultValue={settings.phone} />
@@ -1102,6 +1111,36 @@ function Admin() {
               <button className="button primary">
                 <Save /> সংরক্ষণ
               </button>
+            </form>
+            <hr />
+            <h3>Admin password পরিবর্তন</h3>
+            <form
+              className="settings-form"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const f = new FormData(form);
+                try {
+                  const result = await api.changePassword({ currentPassword: f.get("currentPassword"), newPassword: f.get("newPassword") });
+                  form.reset();
+                  sessionStorage.removeItem("tripti-admin-token");
+                  setToken("");
+                  setAuthenticated(false);
+                  setNotice(result.message);
+                } catch (error) {
+                  setNotice(error.message);
+                }
+              }}
+            >
+              <label>
+                বর্তমান password
+                <input name="currentPassword" type="password" required minLength="8" maxLength="128" autoComplete="current-password" />
+              </label>
+              <label>
+                নতুন password
+                <input name="newPassword" type="password" required minLength="12" maxLength="128" autoComplete="new-password" />
+              </label>
+              <button className="button primary"><Save /> Password পরিবর্তন</button>
             </form>
             <p role="status">{notice}</p>
           </section>
@@ -1156,7 +1195,7 @@ function ProductModal({ product, onClose, onSave }) {
         <form onSubmit={onSave} className="settings-form">
           <label>
             নাম
-            <input name="name" required defaultValue={product.name} />
+            <input name="name" required minLength="2" maxLength="100" autoComplete="off" defaultValue={product.name} />
           </label>
           <label>
             Slug
@@ -1164,6 +1203,7 @@ function ProductModal({ product, onClose, onSave }) {
               name="slug"
               required
               pattern="[a-z0-9-]+"
+              autoComplete="off"
               defaultValue={product.slug}
             />
           </label>
@@ -1217,6 +1257,9 @@ function ProductModal({ product, onClose, onSave }) {
             <textarea
               name="description"
               required
+              minLength="5"
+              maxLength="600"
+              autoComplete="off"
               defaultValue={product.description}
             />
           </label>

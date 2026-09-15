@@ -2,7 +2,7 @@ export const clean=(value,max=200)=>typeof value==="string"?value.trim().slice(0
 export const validPhone=value=>/^01[3-9]\d{8}$/.test(value);
 export const validEmail=value=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)&&value.length<=120;
 export const validObjectId=value=>/^[a-f\d]{24}$/i.test(value);
-export const validImage=value=>/^\/assets\/[a-z0-9._-]+$/i.test(value)||/^https:\/\/[a-z0-9.-]+(?:\/[^\s]*)?$/i.test(value);
+export const validImage=value=>/^\/(?:assets|uploads)\/[a-z0-9._-]+$/i.test(value)||/^https:\/\/[a-z0-9.-]+(?:\/[^\s]*)?$/i.test(value);
 export const validMobilePaymentDetails=(senderNumber,transactionId)=>validPhone(senderNumber)&&/^[A-Z0-9-]{6,24}$/.test(transactionId);
 
 export function productInput(body){

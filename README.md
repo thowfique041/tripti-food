@@ -13,6 +13,7 @@
 - COD, bKash, Nagad এবং WhatsApp fallback
 - Server-side price, delivery fee ও stock validation
 - Admin login, product CRUD, store settings ও order status
+- Admin account database-এ থাকে এবং password শুধু bcrypt hash হিসেবে সংরক্ষিত হয়
 - Helmet security headers, strict CORS, request limits ও rate limits
 - Environment-only secrets; no credentials in source
 
@@ -25,7 +26,7 @@ Node.js 20+ এবং local MongoDB প্রয়োজন।
 ```bash
 cd backend
 cp .env.example .env
-# .env-এ শক্তিশালী JWT_SECRET, ADMIN_EMAIL ও ADMIN_PASSWORD দিন
+# .env-এ শক্তিশালী JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD ও STORE_EMAIL দিন
 npm install
 npm run seed
 npm run dev
@@ -50,4 +51,4 @@ Admin: `http://localhost:5173/admin`
 - Frontend: Cloudflare Pages বা Vercel (`npm run build`, output `dist`)
 - Backend: Render/Railway/Node-compatible host (`npm start`)
 - Database: MongoDB Atlas
-- Production environment-এ `FRONTEND_URL`, `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL` ও `ADMIN_PASSWORD` অবশ্যই configure করুন।
+- Runtime-এ `FRONTEND_URL`, `MONGODB_URI` ও `JWT_SECRET` configure করুন। প্রথম admin তৈরি বা password reset করতে seed চালানোর সময় `ADMIN_EMAIL`, `ADMIN_PASSWORD` ও `STORE_EMAIL` দিন।
