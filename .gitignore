@@ -1,0 +1,19 @@
+# Dependencies and Cloudflare local state
+node_modules/
+.wrangler/
+.dev.vars
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Generated deliverables and OS/editor files
+outputs/
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Local runtime state
+.sites-runtime/
