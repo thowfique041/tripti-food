@@ -20,12 +20,20 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleCheck,
+  MapPin,
 } from "lucide-react";
 import { api } from "./api";
 import { fallbackProducts, defaultSettings } from "./data";
 import { readCart, reconcileCart } from "./cart";
 const money = (n) => `৳${Number(n).toLocaleString("bn-BD")}`,
   bn = (n) => Number(n).toLocaleString("bn-BD");
+const orderStatusLabels = {
+  pending: "অপেক্ষমাণ",
+  confirmed: "নিশ্চিত",
+  shipped: "পাঠানো হয়েছে",
+  delivered: "ডেলিভারি সম্পন্ন",
+  cancelled: "বাতিল",
+};
 const pricing = (p) => {
   if (Number.isFinite(p.currentPrice))
     return {
@@ -983,6 +991,7 @@ function Admin() {
                   <tr>
                     <th>অর্ডার</th>
                     <th>ক্রেতা</th>
+                    <th>ডেলিভারি ঠিকানা</th>
                     <th>মোট</th>
                     <th>পেমেন্ট</th>
                     <th>স্ট্যাটাস</th>
@@ -991,7 +1000,7 @@ function Admin() {
                 <tbody>
                   {orders.length ? (
                     orders.map((o) => (
-                      <tr key={o._id}>
+                      <tr key={o._id} className={`order-row status-${o.status}`}>
                         <td>
                           {o.orderNumber}
                           <small>
@@ -1004,28 +1013,32 @@ function Admin() {
                           <small>{o.customer.email}</small>
                           {o.comment && <small>মন্তব্য: {o.comment}</small>}
                         </td>
+                        <td className="order-address">
+                          <span><MapPin size={16} />{o.customer.address || "ঠিকানা দেওয়া হয়নি"}</span>
+                          <small>{o.customer.area === "dhaka" ? "ঢাকার ভিতরে" : "ঢাকার বাইরে"}</small>
+                        </td>
                         <td>{money(o.total)}</td>
                         <td>{o.payment}</td>
                         <td>
                           <select
+                            className={`order-status status-${o.status}`}
+                            aria-label={`${o.orderNumber} অর্ডারের স্ট্যাটাস`}
                             value={o.status}
                             onChange={async (e) => {
                               await api.updateOrder(o._id, e.target.value);
                               load();
                             }}
                           >
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="shipped">Shipped</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
+                            {Object.entries(orderStatusLabels).map(([value, label]) => (
+                              <option value={value} key={value}>{label}</option>
+                            ))}
                           </select>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5">এখনো কোনো অর্ডার নেই।</td>
+                      <td colSpan="6">এখনো কোনো অর্ডার নেই।</td>
                     </tr>
                   )}
                 </tbody>

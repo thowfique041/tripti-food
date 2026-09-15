@@ -244,6 +244,50 @@ button:disabled {
   display: block;
   color: var(--muted);
 }
+.order-row {
+  --status-color: #89928d;
+  --status-bg: #f0f2f1;
+  transition: background-color .2s ease;
+}
+.order-row:hover {
+  background: color-mix(in srgb, var(--status-bg) 48%, white);
+}
+.order-row td:first-child {
+  box-shadow: inset 3px 0 0 var(--status-color);
+}
+.order-address {
+  min-width: 230px;
+  max-width: 340px;
+}
+.order-address > span {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--ink);
+  font-weight: 650;
+  line-height: 1.35;
+}
+.order-address svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--status-color);
+}
+.order-address small {
+  margin: 6px 0 0 23px;
+}
+.order-status {
+  min-width: 150px;
+  border-color: color-mix(in srgb, var(--status-color) 45%, white) !important;
+  background: var(--status-bg) !important;
+  color: var(--status-color) !important;
+  font-weight: 800;
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--status-color) 12%, transparent);
+}
+.status-pending { --status-color: #96640b; --status-bg: #fff4d7; }
+.status-confirmed { --status-color: #1769aa; --status-bg: #e8f3ff; }
+.status-shipped { --status-color: #6842b8; --status-bg: #f0eaff; }
+.status-delivered { --status-color: #137448; --status-bg: #e2f7eb; }
+.status-cancelled { --status-color: #b23b35; --status-bg: #fde9e7; }
 .admin-products {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
