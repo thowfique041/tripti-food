@@ -17,6 +17,8 @@ import {
   ClipboardList,
   LayoutDashboard,
   Settings,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { api } from "./api";
 import { fallbackProducts, defaultSettings } from "./data";
@@ -98,8 +100,13 @@ function Storefront() {
     [drawer, setDrawer] = useState(false),
     [checkout, setCheckout] = useState(false),
     [selectedProduct, setSelectedProduct] = useState(null),
+    [heroIndex, setHeroIndex] = useState(0),
     [notice, setNotice] = useState("");
   const categories = ["সব", ...new Set(products.map((p) => p.category))],
+    heroProducts = products.filter((p) => p.featured && p.stock > 0),
+    heroProduct = heroProducts.length
+      ? heroProducts[heroIndex % heroProducts.length]
+      : null,
     shown =
       category === "সব"
         ? products
@@ -108,6 +115,17 @@ function Storefront() {
     () => localStorage.setItem("tripti-cart", JSON.stringify(cart)),
     [cart],
   );
+  useEffect(() => {
+    if (heroIndex >= heroProducts.length) setHeroIndex(0);
+  }, [heroIndex, heroProducts.length]);
+  useEffect(() => {
+    if (heroProducts.length < 2) return;
+    const timer = setInterval(
+      () => setHeroIndex((index) => (index + 1) % heroProducts.length),
+      5000,
+    );
+    return () => clearInterval(timer);
+  }, [heroProducts.length]);
   const detailed = cart
       .map((l) => ({
         ...l,
@@ -139,6 +157,15 @@ function Storefront() {
           x.productId === id ? { ...x, quantity: x.quantity + delta } : x,
         )
         .filter((x) => x.quantity > 0),
+    );
+  }
+  function goToProduct(product) {
+    setCategory("সব");
+    location.hash = `product-${product._id}`;
+    requestAnimationFrame(() =>
+      document
+        .getElementById(`product-${product._id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" }),
     );
   }
   const wa = `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent("আসসালামু আলাইকুম, তৃপ্তি ফুড থেকে অর্ডার করতে চাই।")}`;
@@ -193,16 +220,29 @@ function Storefront() {
               <span>✓ সহজ পেমেন্ট</span>
             </div>
           </div>
-          <div className="hero-visual">
-            <img
-              src="/assets/dark-elixir.webp"
-              alt="মধু, খেজুর, বাদাম ও সিডের মিশ্রণ"
-            />
-            <div className="hero-badge">
-              <strong>নতুন</strong>
-              <span>ডার্ক এলিক্সার</span>
+          {heroProduct ? (
+            <div className="hero-visual hero-slider" aria-roledescription="carousel" aria-label="বিশেষ পণ্য">
+              <button className="hero-product" onClick={() => goToProduct(heroProduct)} aria-label={`${heroProduct.name} পণ্যটি দেখুন`}>
+                <img src={heroProduct.image} alt={heroProduct.name} key={heroProduct._id} />
+                <div className="hero-badge">
+                  <strong>{pricing(heroProduct).offer ? offerText(pricing(heroProduct).offer) : "বিশেষ"}</strong>
+                  <span>{heroProduct.name}</span>
+                  <small>{money(pricing(heroProduct).current)}</small>
+                </div>
+              </button>
+              {heroProducts.length > 1 && (
+                <>
+                  <button className="hero-arrow prev" onClick={() => setHeroIndex((heroIndex - 1 + heroProducts.length) % heroProducts.length)} aria-label="আগের পণ্য"><ChevronLeft /></button>
+                  <button className="hero-arrow next" onClick={() => setHeroIndex((heroIndex + 1) % heroProducts.length)} aria-label="পরের পণ্য"><ChevronRight /></button>
+                  <div className="hero-dots" aria-label="Slider navigation">
+                    {heroProducts.map((product, index) => <button key={product._id} className={index === heroIndex ? "active" : ""} onClick={() => setHeroIndex(index)} aria-label={`${bn(index + 1)} নম্বর পণ্য`} />)}
+                  </div>
+                </>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="hero-empty"><ShoppingBag /><strong>শিগগিরই নতুন পণ্য আসছে</strong></div>
+          )}
         </section>
         <section className="benefits wrap">
           <article>
@@ -254,7 +294,7 @@ function Storefront() {
             {shown.map((p) => {
               const price = pricing(p);
               return (
-              <article className="product-card" key={p._id}>
+              <article className="product-card" id={`product-${p._id}`} key={p._id}>
                 <button className="product-open" onClick={() => setSelectedProduct(p)} aria-label={`${p.name} বিস্তারিত দেখুন`}>
                   <img src={p.image} alt={p.name} loading="lazy" />
                   {price.offer && <span className="offer-badge">{offerText(price.offer)}</span>}
@@ -745,6 +785,7 @@ function Admin() {
         stock: Number(f.get("stock")),
         description: f.get("description"),
         image: f.get("image"),
+        featured: f.get("featured") === "on",
         discount: {
           enabled: f.get("discountEnabled") === "on",
           type: f.get("discountType"),
@@ -1166,6 +1207,10 @@ function ProductModal({ product, onClose, onSave }) {
               required
               defaultValue={product.stock}
             />
+          </label>
+          <label className="wide hero-choice">
+            <input name="featured" type="checkbox" defaultChecked={Boolean(product.featured)} />
+            Hero slider-এ এই পণ্যটি দেখান
           </label>
           <label className="wide">
             বর্ণনা
