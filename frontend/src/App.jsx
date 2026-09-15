@@ -19,6 +19,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  CircleCheck,
 } from "lucide-react";
 import { api } from "./api";
 import { fallbackProducts, defaultSettings } from "./data";
@@ -100,7 +101,9 @@ function Storefront() {
     [checkout, setCheckout] = useState(false),
     [selectedProduct, setSelectedProduct] = useState(null),
     [heroIndex, setHeroIndex] = useState(0),
-    [notice, setNotice] = useState("");
+    [notice, setNotice] = useState(""),
+    [addedFeedback, setAddedFeedback] = useState(null),
+    [cartPulse, setCartPulse] = useState(false);
   const categories = ["সব", ...new Set(products.map((p) => p.category))],
     heroProducts = products.filter((p) => p.featured && p.stock > 0),
     heroProduct = heroProducts.length
@@ -139,6 +142,7 @@ function Storefront() {
       0,
     );
   function add(p) {
+    const feedbackId = Date.now();
     setCart((c) => {
       const line = c.find((x) => x.productId === p._id);
       return line
@@ -149,8 +153,14 @@ function Storefront() {
           )
         : [...c, { productId: p._id, quantity: 1 }];
     });
-    setNotice("কার্টে যোগ হয়েছে");
-    setTimeout(() => setNotice(""), 1600);
+    setNotice(`${p.name} কার্টে যোগ হয়েছে`);
+    setAddedFeedback({ product: p, id: feedbackId });
+    setCartPulse(true);
+    setTimeout(() => setCartPulse(false), 650);
+    setTimeout(() => {
+      setAddedFeedback((current) => current?.id === feedbackId ? null : current);
+      setNotice("");
+    }, 1900);
   }
   function quantity(id, delta) {
     setCart((c) =>
@@ -185,7 +195,7 @@ function Storefront() {
           <a href="#quality">আমাদের গল্প</a>
           <a href="#faq">জিজ্ঞাসা</a>
         </nav>
-        <button className="cart-button" onClick={() => setDrawer(true)}>
+        <button className={`cart-button${cartPulse ? " cart-pulse" : ""}`} onClick={() => setDrawer(true)}>
           <ShoppingBag size={18} /> কার্ট{" "}
           <span>{bn(cart.reduce((s, x) => s + x.quantity, 0))}</span>
         </button>
@@ -500,7 +510,21 @@ function Storefront() {
       <a className="whatsapp-float" href={wa} aria-label="WhatsApp">
         <MessageCircle />
       </a>
-      {notice && <div className="toast show">{notice}</div>}
+      <div className="sr-only" role="status" aria-live="polite">{notice}</div>
+      {addedFeedback && (
+        <div className="cart-feedback" key={addedFeedback.id} role="presentation">
+          <div className="cart-feedback-image">
+            <img src={addedFeedback.product.image} alt="" />
+            <span><CircleCheck size={18} strokeWidth={3} /></span>
+          </div>
+          <div>
+            <strong>কার্টে যোগ হয়েছে!</strong>
+            <small>{addedFeedback.product.name}</small>
+          </div>
+          <ShoppingBag className="cart-feedback-bag" size={25} />
+          <i aria-hidden="true" />
+        </div>
+      )}
     </>
   );
 }
