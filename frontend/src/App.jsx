@@ -1134,6 +1134,7 @@ function Admin() {
                         </td>
                         <td>
                           <button className="order-view" type="button" onClick={() => setSelectedOrder(o)}><Eye size={17} /> বিস্তারিত</button>
+                          {o.courier?.trackingId && <small>{o.courier.company}: {o.courier.trackingId}</small>}
                         </td>
                       </tr>
                     ))
@@ -1301,13 +1302,31 @@ function Admin() {
             setSelectedOrder(result.order);
             await load();
           }}
+          onCourier={async (courier) => {
+            const result = await api.saveCourier(selectedOrder._id, courier);
+            setSelectedOrder(result.order);
+            await load();
+            return result.order;
+          }}
         />
       )}
     </main>
   );
 }
-function OrderDetails({ order, history, onClose, onVerify }) {
-  const mobilePayment = order.payment === "bkash" || order.payment === "nagad";
+function OrderDetails({ order, history, onClose, onVerify, onCourier }) {
+  const mobilePayment = order.payment === "bkash" || order.payment === "nagad",
+    [courierMessage, setCourierMessage] = useState("");
+  async function saveCourier(event) {
+    event.preventDefault();
+    const form = event.currentTarget, fields = new FormData(form);
+    try {
+      await onCourier({ company: fields.get("company"), trackingId: fields.get("trackingId"), trackingUrl: fields.get("trackingUrl"), charge: Number(fields.get("charge") || 0), shippedAt: fields.get("shippedAt") || null });
+      setCourierMessage("Courier-এর তথ্য সংরক্ষিত হয়েছে।");
+    } catch (error) { setCourierMessage(error.message); }
+  }
+  const courierText = order.courier?.trackingId
+    ? `আসসালামু আলাইকুম, আপনার ${order.orderNumber} অর্ডারটি ${order.courier.company} Courier-এ পাঠানো হয়েছে। Tracking ID: ${order.courier.trackingId}${order.courier.trackingUrl ? `। Track করুন: ${order.courier.trackingUrl}` : ""}`
+    : `আসসালামু আলাইকুম, তৃপ্তি ফুড থেকে আপনার ${order.orderNumber} অর্ডার সম্পর্কে যোগাযোগ করছি।`;
   return (
     <div className="modal-backdrop order-modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <section className="order-details-modal" role="dialog" aria-modal="true" aria-labelledby="order-details-title">
@@ -1326,10 +1345,21 @@ function OrderDetails({ order, history, onClose, onVerify }) {
           <div><span>ডেলিভারি</span><strong>{money(order.deliveryFee)}</strong></div>
           <div className="invoice-total"><span>সর্বমোট</span><strong>{money(order.total)}</strong></div>
         </div>
+        <form className="courier-form" onSubmit={saveCourier}>
+          <h3><Truck size={19} /> Courier tracking</h3>
+          <label>Courier company<select name="company" required defaultValue={order.courier?.company || ""}><option value="" disabled>নির্বাচন করুন</option><option>Pathao</option><option>Steadfast</option><option>RedX</option><option>Paperfly</option><option>Sundarban</option><option>SA Paribahan</option><option>অন্যান্য</option></select></label>
+          <label>Tracking / Consignment ID<input name="trackingId" required maxLength="80" defaultValue={order.courier?.trackingId || ""} /></label>
+          <label>Tracking link <span className="optional">(ঐচ্ছিক)</span><input name="trackingUrl" type="url" placeholder="https://..." maxLength="500" defaultValue={order.courier?.trackingUrl || ""} /></label>
+          <label>Courier charge<input name="charge" type="number" min="0" max="100000" defaultValue={order.courier?.charge || 0} /></label>
+          <label>পাঠানোর তারিখ <span className="optional">(ঐচ্ছিক)</span><input name="shippedAt" type="date" defaultValue={order.courier?.shippedAt ? new Date(order.courier.shippedAt).toISOString().slice(0, 10) : ""} /></label>
+          <button className="button primary"><Save /> সংরক্ষণ</button>
+          <p role="status">{courierMessage}</p>
+        </form>
         <div className="customer-history"><h3><Users size={18} /> একই ফোনে আগের অর্ডার</h3><p>মোট {bn(history.length)}টি · {money(history.reduce((sum, item) => sum + Number(item.total || 0), 0))}</p></div>
         <div className="order-actions">
           <a className="button ghost" href={`tel:${order.customer?.phone}`}><Phone /> কল করুন</a>
-          <a className="button whatsapp-action" target="_blank" rel="noreferrer" href={`https://wa.me/88${order.customer?.phone}?text=${encodeURIComponent(`আসসালামু আলাইকুম, তৃপ্তি ফুড থেকে আপনার ${order.orderNumber} অর্ডার সম্পর্কে যোগাযোগ করছি।`)}`}><MessageCircle /> WhatsApp</a>
+          <a className="button whatsapp-action" target="_blank" rel="noreferrer" href={`https://wa.me/88${order.customer?.phone}?text=${encodeURIComponent(courierText)}`}><MessageCircle /> WhatsApp</a>
+          {order.courier?.trackingUrl && <a className="button ghost" target="_blank" rel="noreferrer" href={order.courier.trackingUrl}><Truck /> Track parcel</a>}
           <button className="button primary" onClick={() => window.print()}><Printer /> Invoice / Label</button>
         </div>
       </section>

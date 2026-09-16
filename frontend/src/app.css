@@ -404,6 +404,12 @@ button:disabled {
 .invoice-items > div { display:flex; justify-content:space-between; gap:15px; padding:10px 14px; border-bottom:1px solid var(--line); }
 .invoice-items > div:last-child { border:0; }
 .invoice-total { background:#eaf5ee; color:var(--green); font-size:18px; }
+.courier-form { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:15px; padding:16px; border:1px solid #cbdcd3; border-radius:13px; background:#f6faf8; }
+.courier-form h3 { grid-column:1/-1; display:flex; align-items:center; gap:8px; margin:0; color:var(--green); }
+.courier-form label { display:flex; flex-direction:column; gap:5px; font-weight:700; }
+.courier-form input,.courier-form select { width:100%; padding:10px 11px; border:1px solid #ccd6d0; border-radius:8px; background:#fff; }
+.courier-form .button { width:max-content; }
+.courier-form > p { align-self:center; margin:0; color:var(--green); font-weight:700; }
 .customer-history { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:15px; padding:13px 15px; border-radius:12px; background:#f2f0fb; color:#513c8c; }
 .customer-history h3,.customer-history p { display:flex; align-items:center; gap:7px; margin:0; }
 .order-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
@@ -494,6 +500,8 @@ button:disabled {
   .order-detail-grid { grid-template-columns:1fr; }
   .invoice-heading { align-items:flex-start; flex-direction:column; }
   .customer-history { align-items:flex-start; flex-direction:column; }
+  .courier-form { grid-template-columns:1fr; }
+  .courier-form h3 { grid-column:auto; }
 }
 @media print {
   body * { visibility:hidden!important; }

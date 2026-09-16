@@ -18,11 +18,22 @@ router.patch("/orders/:id", async (req, res, next) => {
   try {
     const status = req.body.status;
     const hasPaymentVerified = typeof req.body.paymentVerified === "boolean";
-    if (!validObjectId(req.params.id) || (status !== undefined && !orderStatuses.includes(status)) || (status === undefined && !hasPaymentVerified))
+    const hasCourier = req.body.courier && typeof req.body.courier === "object";
+    if (!validObjectId(req.params.id) || (status !== undefined && !orderStatuses.includes(status)) || (status === undefined && !hasPaymentVerified && !hasCourier))
       throw Object.assign(new Error("তথ্য সঠিক নয়।"), { status: 422 });
 
     const current = await Order.findById(req.params.id).lean();
     if (!current) throw Object.assign(new Error("অর্ডার পাওয়া যায়নি।"), { status: 404 });
+    if (status === undefined && hasCourier) {
+      const source = req.body.courier;
+      const charge = Number(source.charge || 0);
+      const shippedAt = source.shippedAt ? new Date(source.shippedAt) : null;
+      const courier = { company: clean(source.company, 50), trackingId: clean(source.trackingId, 80), trackingUrl: clean(source.trackingUrl, 500), charge, shippedAt };
+      if (!courier.company || !courier.trackingId || (courier.trackingUrl && !/^https:\/\/[^\s]+$/i.test(courier.trackingUrl)) || !Number.isFinite(charge) || charge < 0 || charge > 100000 || (shippedAt && Number.isNaN(shippedAt.getTime())))
+        throw Object.assign(new Error("Courier-এর তথ্য সঠিকভাবে দিন।"), { status: 422 });
+      const order = await Order.findByIdAndUpdate(req.params.id, { courier }, { new: true, runValidators: true });
+      return res.json({ order });
+    }
     if (status === undefined) {
       if (req.body.paymentVerified === false && !["pending", "cancelled"].includes(current.status))
         throw Object.assign(new Error("নিশ্চিত বা পাঠানো অর্ডারের payment verification সরানো যাবে না।"), { status: 409 });

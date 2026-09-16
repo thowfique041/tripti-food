@@ -49,6 +49,11 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ paymentVerified }),
     }),
+  saveCourier: (id, courier) =>
+    request(`/admin/orders/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ courier }),
+    }),
   updateSettings: (data) =>
     request("/admin/settings", { method: "PUT", body: JSON.stringify(data) }),
 };
