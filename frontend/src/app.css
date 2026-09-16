@@ -2,6 +2,62 @@ button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
+.nav-track { padding:0; border:0; background:transparent; color:inherit; font:inherit; cursor:pointer; }
+.store-search { display:flex; align-items:center; gap:10px; width:min(560px,100%); margin:-6px 0 24px; padding:0 14px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+.store-search svg { color:var(--green); }
+.store-search input { width:100%; padding:12px 0; border:0; outline:0; background:transparent; }
+.stock-low,.stock-warning { color:#a25408!important; font-weight:800; }
+.recent-section { padding-bottom:50px; }
+.recent-products { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.recent-products button { display:grid; grid-template-columns:64px 1fr; gap:10px; align-items:center; padding:10px; border:1px solid var(--line); border-radius:12px; background:#fff; text-align:left; cursor:pointer; }
+.recent-products img { grid-row:1/3; width:64px; height:64px; object-fit:cover; border-radius:9px; }
+.recent-products strong { color:var(--green); }
+.detail-actions { display:flex; gap:9px; flex-wrap:wrap; }
+.offer-countdown { display:flex; align-items:center; gap:6px; color:#a34916!important; font-weight:800; }
+.review-summary,.related-products { width:100%; margin-top:18px; padding-top:14px; border-top:1px solid var(--line); }
+.review-summary h3,.related-products h3 { margin:0 0 10px; }
+.review-summary article { padding:9px 0; border-bottom:1px solid var(--line); }
+.review-summary article span { color:#d68d0a; }
+.review-summary article p { margin:4px 0!important; }
+.related-products { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.related-products h3 { grid-column:1/-1; }
+.related-products button { padding:7px; border:1px solid var(--line); border-radius:9px; background:#fff; cursor:pointer; }
+.related-products img { width:100%; height:70px; object-fit:cover; border-radius:7px; }
+.related-products span { display:block; margin-top:5px; font-weight:700; }
+.mobile-cart-bar { display:none; }
+.delivery-estimate { display:flex; align-items:center; gap:7px; margin:14px 0; padding:10px 12px; border-radius:9px; background:#eef7f1; color:var(--green); font-weight:750; }
+.save-info { flex-direction:row!important; align-items:center; gap:8px; padding:10px; border-radius:9px; background:#f5f6f5; }
+.save-info input { width:auto!important; }
+.success-receipt { padding:38px; text-align:center; }
+.success-receipt > svg { width:54px; height:54px; color:#16804f; }
+.success-receipt h2 { margin:6px 0; }
+.receipt-number { display:block; margin:4px 0 18px; color:var(--green); font-size:22px; }
+.success-receipt > div { margin:14px 0; border:1px solid var(--line); border-radius:12px; overflow:hidden; text-align:left; }
+.success-receipt > div p { display:flex; justify-content:space-between; gap:15px; margin:0; padding:9px 12px; border-bottom:1px solid var(--line); }
+.success-receipt .receipt-total { background:#e7f4eb; font-size:18px; }
+.success-receipt .button { display:flex; align-items:center; gap:7px; margin:18px auto 0; }
+.tracking-modal { position:relative; width:min(720px,100%); max-height:calc(100vh - 30px); overflow:auto; padding:30px; border-radius:20px; background:#fff; }
+.tracking-modal .dialog-close { position:absolute; right:16px; top:12px; }
+.tracking-search { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; }
+.tracking-search label,.review-forms label { display:flex; flex-direction:column; gap:5px; font-weight:700; }
+.tracking-search input,.review-forms input,.review-forms select,.review-forms textarea { padding:10px; border:1px solid #cfd8d3; border-radius:8px; }
+.tracking-search .button { display:flex; align-items:center; gap:6px; }
+.tracking-status { display:flex; align-items:center; gap:10px; width:max-content; margin:16px 0; padding:10px 13px; border-radius:10px; background:var(--status-bg); color:var(--status-color); }
+.tracking-status small,.tracking-status strong { display:block; }
+.tracking-items { margin:12px 0; border:1px solid var(--line); border-radius:10px; }
+.tracking-items div { display:flex; justify-content:space-between; padding:9px 11px; border-bottom:1px solid var(--line); }
+.public-courier { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0; padding:12px; border-radius:10px; background:#f0f5ff; }
+.review-forms { margin-top:18px; }
+.review-forms > form { display:grid; grid-template-columns:1fr 120px; gap:9px; margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:10px; }
+.review-forms textarea { min-height:70px; }
+.review-forms form > strong,.review-forms form > label:nth-of-type(2) { grid-column:1/-1; }
+.admin-reviews { display:grid; gap:11px; margin-top:18px; }
+.admin-reviews article { display:flex; justify-content:space-between; gap:15px; padding:15px; border:1px solid var(--line); border-radius:12px; }
+.admin-reviews article.pending { border-color:#e7c673; background:#fffaf0; }
+.admin-reviews h3,.admin-reviews p { margin:4px 0; }
+.review-stars { color:#d68d0a; }
+.admin-reviews article > div:last-child { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.danger-button { color:#a82d22; background:#fdecea; }
 
 /* Keep the previous price unmistakably separate from the current offer price. */
 .product-card .price-row {
@@ -502,6 +558,14 @@ button:disabled {
   .customer-history { align-items:flex-start; flex-direction:column; }
   .courier-form { grid-template-columns:1fr; }
   .courier-form h3 { grid-column:auto; }
+  .recent-products { grid-template-columns:1fr 1fr; }
+  .recent-products button { grid-template-columns:48px 1fr; }
+  .recent-products img { width:48px; height:48px; }
+  .mobile-cart-bar { position:fixed; z-index:35; left:12px; right:12px; bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:9px; padding:13px 16px; border:0; border-radius:14px; background:var(--green); color:#fff; box-shadow:0 12px 35px rgba(0,40,25,.3); }
+  .tracking-search { grid-template-columns:1fr; }
+  .review-forms > form { grid-template-columns:1fr; }
+  .review-forms form > strong,.review-forms form > label:nth-of-type(2) { grid-column:auto; }
+  .admin-reviews article { flex-direction:column; }
 }
 @media print {
   body * { visibility:hidden!important; }

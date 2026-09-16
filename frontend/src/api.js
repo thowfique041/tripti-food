@@ -20,11 +20,17 @@ export const api = {
   settings: () => request("/settings"),
   createOrder: (data) =>
     request("/orders", { method: "POST", body: JSON.stringify(data) }),
+  lookupOrder: (data) => request("/orders/lookup", { method: "POST", body: JSON.stringify(data) }),
+  reviews: (productId) => request(`/reviews?productId=${encodeURIComponent(productId)}`),
+  createReview: (data) => request("/reviews", { method: "POST", body: JSON.stringify(data) }),
   login: (data) =>
     request("/auth/login", { method: "POST", body: JSON.stringify(data) }),
   changePassword: (data) =>
     request("/auth/password", { method: "PUT", body: JSON.stringify(data) }),
   orders: () => request("/admin/orders"),
+  adminReviews: () => request("/admin/reviews"),
+  approveReview: (id, approved) => request(`/admin/reviews/${id}`, { method: "PATCH", body: JSON.stringify({ approved }) }),
+  deleteReview: (id) => request(`/admin/reviews/${id}`, { method: "DELETE" }),
   adminProducts: () => request("/admin/products"),
   uploadImage: (file) => {
     const body = new FormData();

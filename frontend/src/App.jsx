@@ -29,6 +29,11 @@ import {
   BadgeCheck,
   AlertTriangle,
   Users,
+  Share2,
+  Clock,
+  Star,
+  RotateCcw,
+  ClipboardCheck,
 } from "lucide-react";
 import { api } from "./api";
 import { fallbackProducts, defaultSettings } from "./data";
@@ -116,6 +121,9 @@ function Storefront() {
     [drawer, setDrawer] = useState(false),
     [checkout, setCheckout] = useState(false),
     [selectedProduct, setSelectedProduct] = useState(null),
+    [search, setSearch] = useState(""),
+    [tracking, setTracking] = useState(false),
+    [recentIds, setRecentIds] = useState(() => JSON.parse(localStorage.getItem("tripti-recent") || "[]")),
     [heroIndex, setHeroIndex] = useState(0),
     [notice, setNotice] = useState(""),
     [addedFeedback, setAddedFeedback] = useState(null),
@@ -125,10 +133,8 @@ function Storefront() {
     heroProduct = heroProducts.length
       ? heroProducts[heroIndex % heroProducts.length]
       : null,
-    shown =
-      category === "সব"
-        ? products
-        : products.filter((p) => p.category === category);
+    shown = products.filter((p) => (category === "সব" || p.category === category) && (!search.trim() || `${p.name} ${p.description} ${p.category}`.toLowerCase().includes(search.trim().toLowerCase()))),
+    recentProducts = recentIds.map((id) => products.find((p) => p._id === id)).filter(Boolean).slice(0, 4);
   useEffect(
     () => localStorage.setItem("tripti-cart", JSON.stringify(cart)),
     [cart],
@@ -196,6 +202,20 @@ function Storefront() {
         ?.scrollIntoView({ behavior: "smooth", block: "center" }),
     );
   }
+  function openProduct(product) {
+    setSelectedProduct(product);
+    setRecentIds((current) => {
+      const next = [product._id, ...current.filter((id) => id !== product._id)].slice(0, 8);
+      localStorage.setItem("tripti-recent", JSON.stringify(next));
+      return next;
+    });
+  }
+  function repeatOrder(order) {
+    const next = (order.items || []).map((item) => ({ productId: String(item.product), quantity: Math.min(Number(item.quantity), products.find((p) => p._id === String(item.product))?.stock || 0) })).filter((item) => item.quantity > 0);
+    setCart(next);
+    setTracking(false);
+    setDrawer(true);
+  }
   const wa = `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent("আসসালামু আলাইকুম, তৃপ্তি ফুড থেকে অর্ডার করতে চাই।")}`;
   return (
     <>
@@ -208,6 +228,7 @@ function Storefront() {
         </a>
         <nav>
           <a href="#products">পণ্য</a>
+          <button type="button" className="nav-track" onClick={() => setTracking(true)}>অর্ডার ট্র্যাক</button>
           <a href="#quality">আমাদের গল্প</a>
           <a href="#faq">জিজ্ঞাসা</a>
         </nav>
@@ -313,6 +334,7 @@ function Storefront() {
               ))}
             </div>
           </div>
+          <label className="store-search"><Search /><input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="পণ্যের নাম বা category খুঁজুন" /></label>
           {!online && (
             <p className="demo-note">
               Demo catalogue দেখানো হচ্ছে—backend চালু হলে live data আসবে।
@@ -323,18 +345,18 @@ function Storefront() {
               const price = pricing(p);
               return (
               <article className="product-card" id={`product-${p._id}`} key={p._id}>
-                <button className="product-open" onClick={() => setSelectedProduct(p)} aria-label={`${p.name} বিস্তারিত দেখুন`}>
+                <button className="product-open" onClick={() => openProduct(p)} aria-label={`${p.name} বিস্তারিত দেখুন`}>
                   <img src={p.image} alt={p.name} loading="lazy" />
                   {price.offer && <span className="offer-badge">{offerText(price.offer)}</span>}
                 </button>
                 <div className="product-info">
                   <div className="product-meta">
                     <span className="category">{p.category}</span>
-                    <span className="stock">
-                      {p.stock > 0 ? "স্টকে আছে" : "স্টক শেষ"}
+                    <span className={`stock ${p.stock > 0 && p.stock <= 5 ? "stock-low" : ""}`}>
+                      {p.stock > 0 ? (p.stock <= 5 ? `মাত্র ${bn(p.stock)}টি বাকি` : "স্টকে আছে") : "স্টক শেষ"}
                     </span>
                   </div>
-                  <h3><button className="product-name" onClick={() => setSelectedProduct(p)}>{p.name}</button></h3>
+                  <h3><button className="product-name" onClick={() => openProduct(p)}>{p.name}</button></h3>
                   <p>{p.description}</p>
                   <div className="price-row">
                     <span className="price-stack">
@@ -355,6 +377,7 @@ function Storefront() {
             )})}
           </div>
         </section>
+        {recentProducts.length > 0 && <section className="recent-section wrap"><div className="section-head"><div><p className="eyebrow">আবার দেখে নিন</p><h2>সম্প্রতি দেখা</h2></div></div><div className="recent-products">{recentProducts.map((p) => <button key={p._id} onClick={() => openProduct(p)}><img src={p.image} alt="" /><span>{p.name}</span><strong>{money(pricing(p).current)}</strong></button>)}</div></section>}
         <section className="story" id="quality">
           <div className="wrap story-grid">
             <img
@@ -412,6 +435,8 @@ function Storefront() {
             <summary>ডেলিভারি কত দিনে পাব?</summary>
             <p>ঢাকায় সাধারণত ১–২ এবং ঢাকার বাইরে ২–৪ কর্মদিবস লাগতে পারে।</p>
           </details>
+          <details><summary>অর্ডার বাতিল ও refund কীভাবে হবে?</summary><p>অর্ডার courier-এ দেওয়ার আগে আমাদের কল বা WhatsApp করুন। Online payment refund যাচাইয়ের পরে ব্যবহৃত payment মাধ্যমেই দেওয়া হবে।</p></details>
+          <details><summary>পণ্য গ্রহণের সময় সমস্যা পেলে কী করব?</summary><p>প্যাকেট খোলার ভিডিওসহ ২৪ ঘণ্টার মধ্যে যোগাযোগ করুন। ভুল বা ক্ষতিগ্রস্ত পণ্য যাচাই করে সমাধান দেওয়া হবে।</p></details>
           <details>
             <summary>কীভাবে পেমেন্ট করব?</summary>
             <p>ক্যাশ অন ডেলিভারি অথবা bKash/Nagad-এ পেমেন্ট করতে পারবেন।</p>
@@ -521,8 +546,10 @@ function Storefront() {
         />
       )}
       {selectedProduct && (
-        <ProductDetails product={selectedProduct} onClose={() => setSelectedProduct(null)} onAdd={add} />
+        <ProductDetails product={selectedProduct} products={products} onOpen={openProduct} onClose={() => setSelectedProduct(null)} onAdd={add} />
       )}
+      {tracking && <OrderTracker onClose={() => setTracking(false)} onRepeat={repeatOrder} />}
+      {detailed.length > 0 && !drawer && !checkout && <button className="mobile-cart-bar" onClick={() => setDrawer(true)}><ShoppingBag /><span>{bn(detailed.reduce((sum, item) => sum + item.quantity, 0))}টি পণ্য</span><strong>{money(subtotal)}</strong></button>}
       <a className="whatsapp-float" href={wa} aria-label="WhatsApp">
         <MessageCircle />
       </a>
@@ -544,8 +571,18 @@ function Storefront() {
     </>
   );
 }
-function ProductDetails({ product, onClose, onAdd }) {
-  const price = pricing(product);
+function ProductDetails({ product, products, onOpen, onClose, onAdd }) {
+  const price = pricing(product),
+    [reviews, setReviews] = useState([]),
+    related = products.filter((item) => item._id !== product._id && item.category === product.category && item.stock > 0).slice(0, 3);
+  useEffect(() => { api.reviews(product._id).then((data) => setReviews(data.reviews || [])).catch(() => setReviews([])); }, [product._id]);
+  const offerEnds = price.offer?.endAt ? new Date(price.offer.endAt) : null,
+    offerTime = offerEnds && offerEnds > new Date() ? `${Math.max(1, Math.ceil((offerEnds - new Date()) / 86400000))} দিনের মধ্যে offer শেষ` : "";
+  async function shareProduct() {
+    const url = `${location.origin}${location.pathname}#product-${product._id}`;
+    if (navigator.share) await navigator.share({ title: product.name, text: product.description, url }).catch(() => {});
+    else { await navigator.clipboard.writeText(url); alert("পণ্যের link copy হয়েছে।"); }
+  }
   return (
     <div className="modal-backdrop">
       <section className="product-details" aria-modal="true" role="dialog" aria-label={`${product.name} বিস্তারিত`}>
@@ -563,8 +600,12 @@ function ProductDetails({ product, onClose, onAdd }) {
             <strong>{money(price.current)}</strong>
           </div>
           {price.offer && <p className="saving">আপনি সাশ্রয় করছেন {money(price.savings)}</p>}
+          {offerTime && <p className="offer-countdown"><Clock size={16} /> {offerTime}</p>}
           {price.offer?.quantityRemaining != null && <p className="offer-remaining">Offer-এ আর {bn(price.offer.quantityRemaining)}টি বাকি</p>}
-          <button className="button primary" disabled={!product.stock} onClick={() => { onAdd(product); onClose(); }}><ShoppingBag size={18} /> কার্টে যোগ করুন</button>
+          {product.stock > 0 && product.stock <= 5 && <p className="stock-warning">মাত্র {bn(product.stock)}টি বাকি</p>}
+          <div className="detail-actions"><button className="button primary" disabled={!product.stock} onClick={() => { onAdd(product); onClose(); }}><ShoppingBag size={18} /> কার্টে যোগ করুন</button><button className="button ghost" onClick={shareProduct}><Share2 size={18} /> Share</button></div>
+          {reviews.length > 0 && <div className="review-summary"><h3>Verified reviews</h3>{reviews.slice(0, 3).map((review) => <article key={review._id}><span>{"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}</span><p>{review.comment}</p><small>{review.customerName}</small></article>)}</div>}
+          {related.length > 0 && <div className="related-products"><h3>সম্পর্কিত পণ্য</h3>{related.map((item) => <button key={item._id} onClick={() => onOpen(item)}><img src={item.image} alt="" /><span>{item.name}</span></button>)}</div>}
         </div>
       </section>
     </div>
@@ -574,7 +615,9 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
   const [area, setArea] = useState("dhaka"),
     [payment, setPayment] = useState("cod"),
     [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [receipt, setReceipt] = useState(null),
+    savedCustomer = JSON.parse(localStorage.getItem("tripti-customer") || "{}");
   const fee =
       area === "dhaka" ? settings.deliveryDhaka : settings.deliveryOutside,
     isMobilePayment = payment === "bkash" || payment === "nagad";
@@ -607,9 +650,10 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
       };
     try {
       const d = await api.createOrder(payload);
-      setMessage(`অর্ডার সফল! নম্বর: ${d.order.orderNumber}`);
+      if (f.get("saveInfo") === "on") localStorage.setItem("tripti-customer", JSON.stringify(payload.customer));
+      else localStorage.removeItem("tripti-customer");
+      setReceipt({ ...d.order, customer: payload.customer, payment, items: items.map((item) => ({ name: item.product.name, quantity: item.quantity, total: pricing(item.product).current * item.quantity })), subtotal, deliveryFee: fee });
       onSuccess();
-      setTimeout(onClose, 2200);
     } catch (err) {
       const text = `অর্ডার: ${items.map((x) => `${x.product.name} × ${x.quantity}`).join(", ")}. নাম: ${f.get("name")}, ফোন: ${f.get("phone")}, ইমেইল: ${f.get("email")}, ঠিকানা: ${f.get("address")}${comment ? `, মন্তব্য: ${comment}` : ""}${isMobilePayment ? `, পেমেন্ট: ${payment}, পাঠানো নম্বর: ${f.get("senderNumber")}, Transaction ID: ${f.get("transactionId")}` : ""}`;
       setMessage(
@@ -631,6 +675,7 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
   return (
     <div className="modal-backdrop">
       <section className="checkout-dialog">
+        {receipt ? <div className="success-receipt"><button type="button" className="dialog-close" onClick={onClose}><X /></button><CircleCheck /><p className="eyebrow">অর্ডার সফল</p><h2>ধন্যবাদ!</h2><p>Order number</p><strong className="receipt-number">{receipt.orderNumber}</strong><div>{receipt.items.map((item, index) => <p key={index}><span>{item.name} × {bn(item.quantity)}</span><b>{money(item.total)}</b></p>)}<p><span>ডেলিভারি</span><b>{money(receipt.deliveryFee)}</b></p><p className="receipt-total"><span>সর্বমোট</span><b>{money(receipt.total)}</b></p></div><small>Order tracking-এর জন্য order number ও ফোন নম্বর সংরক্ষণ করুন।</small><button className="button primary" onClick={() => window.print()}><Printer size={18} /> Receipt print করুন</button></div> :
         <form onSubmit={submit}>
           <button type="button" className="dialog-close" onClick={onClose}>
             <X />
@@ -646,6 +691,7 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
                 minLength="2"
                 maxLength="80"
                 autoComplete="name"
+                defaultValue={savedCustomer.name || ""}
               />
             </label>
             <label>
@@ -657,6 +703,7 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
                 pattern="01[3-9][0-9]{8}"
                 placeholder="01XXXXXXXXX"
                 autoComplete="tel"
+                defaultValue={savedCustomer.phone || ""}
               />
             </label>
             <label className="wide">
@@ -668,6 +715,7 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
                 maxLength="120"
                 placeholder="name@example.com"
                 autoComplete="email"
+                defaultValue={savedCustomer.email || ""}
               />
             </label>
             <label className="wide">
@@ -678,6 +726,7 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
                 minLength="8"
                 maxLength="300"
                 autoComplete="street-address"
+                defaultValue={savedCustomer.address || ""}
               />
             </label>
             <label>
@@ -744,7 +793,9 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
                 placeholder="বিশেষ নির্দেশনা থাকলে লিখুন"
               />
             </label>
+            <label className="wide save-info"><input type="checkbox" name="saveInfo" defaultChecked={Boolean(savedCustomer.phone)} /> পরের order-এর জন্য এই browser-এ নাম, ফোন ও ঠিকানা সংরক্ষণ করুন</label>
           </div>
+          <p className="delivery-estimate"><Truck size={17} /> সম্ভাব্য ডেলিভারি: {area === "dhaka" ? "১–২ কর্মদিবস" : "২–৪ কর্মদিবস"}</p>
           <div className="order-total">
             <span>সর্বমোট</span>
             <strong>{money(subtotal + fee)}</strong>
@@ -758,10 +809,24 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
             {busy ? "পাঠানো হচ্ছে…" : "অর্ডার নিশ্চিত করুন"}
           </button>
           <p className="form-message">{message}</p>
-        </form>
+        </form>}
       </section>
     </div>
   );
+}
+function OrderTracker({ onClose, onRepeat }) {
+  const [order, setOrder] = useState(null), [message, setMessage] = useState(""), [reviewed, setReviewed] = useState([]), [lookupPhone, setLookupPhone] = useState("");
+  async function lookup(event) {
+    event.preventDefault(); const fields = new FormData(event.currentTarget); setMessage("খোঁজা হচ্ছে…");
+    try { const phone = fields.get("phone"); const data = await api.lookupOrder({ orderNumber: fields.get("orderNumber"), phone }); setLookupPhone(phone); setOrder(data.order); setMessage(""); }
+    catch (error) { setOrder(null); setMessage(error.message); }
+  }
+  async function review(event, productId) {
+    event.preventDefault(); const fields = new FormData(event.currentTarget);
+    try { const data = await api.createReview({ orderNumber: order.orderNumber, phone: fields.get("phone"), productId, rating: Number(fields.get("rating")), comment: fields.get("comment") }); setReviewed((items) => [...items, String(productId)]); setMessage(data.message); }
+    catch (error) { setMessage(error.message); }
+  }
+  return <div className="modal-backdrop"><section className="tracking-modal"><button className="dialog-close" onClick={onClose}><X /></button><p className="eyebrow">Account ছাড়াই</p><h2>অর্ডার ট্র্যাক করুন</h2><form className="tracking-search" onSubmit={lookup}><label>Order number<input name="orderNumber" required placeholder="TF-..." /></label><label>অর্ডারের ফোন নম্বর<input name="phone" required pattern="01[3-9][0-9]{8}" placeholder="01XXXXXXXXX" /></label><button className="button primary"><Search size={18} /> খুঁজুন</button></form><p role="status">{message}</p>{order && <div className="tracking-result"><div className={`tracking-status status-${order.status}`}><ClipboardCheck /><div><small>বর্তমান অবস্থা</small><strong>{orderStatusLabels[order.status]}</strong></div></div><p><strong>{order.orderNumber}</strong> · {new Date(order.createdAt).toLocaleDateString("bn-BD")}</p><div className="tracking-items">{order.items.map((item, index) => <div key={index}><span>{item.name} × {bn(item.quantity)}</span><strong>{money(item.lineTotal)}</strong></div>)}</div>{order.courier?.trackingId && <div className="public-courier"><strong>{order.courier.company}</strong><span>Tracking ID: {order.courier.trackingId}</span>{order.courier.trackingUrl && <a className="button ghost" href={order.courier.trackingUrl} target="_blank" rel="noreferrer"><Truck size={17} /> Track parcel</a>}</div>}<button className="button primary" onClick={() => onRepeat(order)}><RotateCcw size={17} /> আবার order করুন</button>{order.status === "delivered" && <div className="review-forms"><h3>পণ্য review করুন</h3>{order.items.map((item) => reviewed.includes(String(item.product)) ? <p key={String(item.product)}>✓ {item.name}-এর review জমা হয়েছে</p> : <form key={String(item.product)} onSubmit={(event) => review(event, String(item.product))}><strong>{item.name}</strong><input type="hidden" name="phone" value={lookupPhone} /><label>Rating<select name="rating" defaultValue="5"><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></label><label>মতামত<textarea name="comment" required minLength="3" maxLength="500" /></label><button className="button ghost"><Star size={17} /> জমা দিন</button></form>)}</div>}</div>}</section></div>;
 }
 function Admin() {
   const [token, setToken] = useState(
@@ -770,6 +835,7 @@ function Admin() {
   const [authenticated, setAuthenticated] = useState(false),
     [orders, setOrders] = useState([]),
     [products, setProducts] = useState([]),
+    [reviews, setReviews] = useState([]),
     [settings, setSettings] = useState(defaultSettings),
     [edit, setEdit] = useState(null),
     [notice, setNotice] = useState(""),
@@ -777,21 +843,23 @@ function Admin() {
     [orderStatus, setOrderStatus] = useState("all"),
     [selectedOrder, setSelectedOrder] = useState(null),
     [module, setModule] = useState(() =>
-      ["dashboard", "orders", "products", "settings"].includes(
+      ["dashboard", "orders", "products", "reviews", "settings"].includes(
         location.hash.slice(1),
       )
         ? location.hash.slice(1)
         : "dashboard",
     );
   async function load() {
-    const [o, p, s] = await Promise.all([
+    const [o, p, s, r] = await Promise.all([
       api.orders(),
       api.adminProducts(),
       api.settings(),
+      api.adminReviews(),
     ]);
     setOrders(o.orders);
     setProducts(p.products);
     setSettings(s.settings);
+    setReviews(r.reviews || []);
     setAuthenticated(true);
   }
   useEffect(() => {
@@ -898,6 +966,7 @@ function Admin() {
       dashboard: "ব্যবসার নিয়ন্ত্রণ",
       orders: "সাম্প্রতিক অর্ডার",
       products: "পণ্যসমূহ",
+      reviews: "Customer reviews",
       settings: "দোকানের সেটিংস",
     },
     normalizedOrderQuery = orderQuery.trim().toLowerCase(),
@@ -949,6 +1018,7 @@ function Admin() {
         >
           <Package /> পণ্য
         </button>
+        <button className={module === "reviews" ? "active" : ""} onClick={() => openModule("reviews")}><Star /> Reviews</button>
         <button
           className={module === "settings" ? "active" : ""}
           onClick={() => openModule("settings")}
@@ -1194,6 +1264,7 @@ function Admin() {
             </div>
           </section>
         )}
+        {module === "reviews" && <section className="admin-card module-card"><div className="admin-row"><div><h2>Customer reviews</h2><p>Verified delivered order থেকে আসা review অনুমোদন করুন।</p></div><span className="filter-count">{bn(reviews.filter((review) => !review.approved).length)}টি অপেক্ষমাণ</span></div><div className="admin-reviews">{reviews.length ? reviews.map((review) => <article key={review._id} className={review.approved ? "approved" : "pending"}><div><span className="review-stars">{"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}</span><h3>{review.product?.name || "পণ্য"}</h3><p>{review.comment}</p><small>{review.customerName} · Order {review.orderNumber}</small></div><div>{!review.approved && <button className="button primary" onClick={async () => { await api.approveReview(review._id, true); load(); }}><BadgeCheck size={17} /> অনুমোদন</button>}<button className="button danger-button" onClick={async () => { if (confirm("Review মুছে ফেলবেন?")) { await api.deleteReview(review._id); load(); } }}><Trash2 size={17} /> মুছুন</button></div></article>) : <p>এখনো কোনো review নেই।</p>}</div></section>}
         {module === "settings" && (
           <section className="admin-card module-card">
             <h2>দোকানের সেটিংস</h2>

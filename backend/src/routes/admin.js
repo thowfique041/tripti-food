@@ -2,6 +2,7 @@ import { Router } from "express";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import Settings from "../models/Settings.js";
+import Review from "../models/Review.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { clean, productInput, validEmail, validObjectId, validPhone } from "../utils/validate.js";
 import { canChangeOrderStatus, orderStatuses, restockOperations } from "../utils/orders.js";
@@ -11,6 +12,25 @@ router.use(requireAdmin);
 
 router.get("/orders", async (req, res, next) => {
   try { res.json({ orders: await Order.find().sort({ createdAt: -1 }).limit(200).lean() }); }
+  catch (error) { next(error); }
+});
+
+router.get("/reviews", async (req, res, next) => {
+  try { res.json({ reviews: await Review.find().populate("product", "name").sort({ createdAt: -1 }).limit(200).lean() }); }
+  catch (error) { next(error); }
+});
+
+router.patch("/reviews/:id", async (req, res, next) => {
+  try {
+    if (!validObjectId(req.params.id) || typeof req.body.approved !== "boolean") throw Object.assign(new Error("তথ্য সঠিক নয়।"), { status: 422 });
+    const review = await Review.findByIdAndUpdate(req.params.id, { approved: req.body.approved }, { new: true });
+    if (!review) throw Object.assign(new Error("Review পাওয়া যায়নি।"), { status: 404 });
+    res.json({ review });
+  } catch (error) { next(error); }
+});
+
+router.delete("/reviews/:id", async (req, res, next) => {
+  try { if (!validObjectId(req.params.id)) throw Object.assign(new Error("Review পাওয়া যায়নি।"), { status: 404 }); await Review.findByIdAndDelete(req.params.id); res.json({ ok: true }); }
   catch (error) { next(error); }
 });
 
