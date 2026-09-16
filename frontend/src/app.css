@@ -569,9 +569,9 @@ button:disabled {
 }
 @media print {
   body * { visibility:hidden!important; }
-  .order-details-modal,.order-details-modal * { visibility:visible!important; }
-  .order-details-modal { position:absolute; inset:0; width:100%; max-height:none; overflow:visible; padding:20px; box-shadow:none; }
-  .order-details-modal .dialog-close,.order-actions { display:none!important; }
+  .order-details-modal,.order-details-modal *,.success-receipt,.success-receipt * { visibility:visible!important; }
+  .order-details-modal,.checkout-dialog { position:absolute; inset:0; width:100%; max-height:none; overflow:visible; padding:20px; box-shadow:none; }
+  .order-details-modal .dialog-close,.success-receipt .dialog-close,.success-receipt .button,.order-actions { display:none!important; }
   .modal-backdrop { position:static; display:block; padding:0; background:#fff; }
 }
 .settings-form select {
