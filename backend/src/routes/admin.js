@@ -4,7 +4,7 @@ import Order from "../models/Order.js";
 import Settings from "../models/Settings.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { clean, productInput, validEmail, validObjectId, validPhone } from "../utils/validate.js";
-import { orderStatuses, restockOperations } from "../utils/orders.js";
+import { canChangeOrderStatus, orderStatuses, restockOperations } from "../utils/orders.js";
 
 const router = Router();
 router.use(requireAdmin);
@@ -24,12 +24,16 @@ router.patch("/orders/:id", async (req, res, next) => {
     const current = await Order.findById(req.params.id).lean();
     if (!current) throw Object.assign(new Error("অর্ডার পাওয়া যায়নি।"), { status: 404 });
     if (status === undefined) {
+      if (req.body.paymentVerified === false && !["pending", "cancelled"].includes(current.status))
+        throw Object.assign(new Error("নিশ্চিত বা পাঠানো অর্ডারের payment verification সরানো যাবে না।"), { status: 409 });
       const order = await Order.findByIdAndUpdate(req.params.id, { paymentVerified: req.body.paymentVerified }, { new: true, runValidators: true });
       return res.json({ order });
     }
     if (current.status === status) return res.json({ order: current });
     if (current.status === "cancelled")
       throw Object.assign(new Error("বাতিল অর্ডারের status আবার পরিবর্তন করা যাবে না।"), { status: 409 });
+    if (!canChangeOrderStatus(current, status))
+      throw Object.assign(new Error("Online payment যাচাই না হওয়া পর্যন্ত অর্ডারটি শুধু বাতিল করা যাবে।"), { status: 409 });
 
     const order = await Order.findOneAndUpdate(
       { _id: req.params.id, status: current.status }, { status }, { new: true },

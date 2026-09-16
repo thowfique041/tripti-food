@@ -1,5 +1,10 @@
 export const orderStatuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
+export function canChangeOrderStatus(order, nextStatus) {
+  const onlinePayment = order?.payment === "bkash" || order?.payment === "nagad";
+  return !onlinePayment || order.paymentVerified || nextStatus === "cancelled";
+}
+
 export function restockOperations(items = []) {
   return items.map((item) => {
     const quantity = Number(item.quantity);

@@ -1105,7 +1105,14 @@ function Admin() {
                           <small>{o.customer.area === "dhaka" ? "ঢাকার ভিতরে" : "ঢাকার বাইরে"}</small>
                         </td>
                         <td>{money(o.total)}</td>
-                        <td>{o.payment}</td>
+                        <td>
+                          {o.payment}
+                          {(o.payment === "bkash" || o.payment === "nagad") && (
+                            <small className={o.paymentVerified ? "payment-ok" : "payment-waiting"}>
+                              {o.paymentVerified ? "যাচাইকৃত" : "যাচাই হয়নি"}
+                            </small>
+                          )}
+                        </td>
                         <td>
                           <select
                             className={`order-status status-${o.status}`}
@@ -1117,7 +1124,11 @@ function Admin() {
                             }}
                           >
                             {Object.entries(orderStatusLabels).map(([value, label]) => (
-                              <option value={value} key={value}>{label}</option>
+                              <option
+                                value={value}
+                                key={value}
+                                disabled={(o.payment === "bkash" || o.payment === "nagad") && !o.paymentVerified && ![o.status, "cancelled"].includes(value)}
+                              >{label}</option>
                             ))}
                           </select>
                         </td>

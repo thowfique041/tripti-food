@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { orderStatuses, restockOperations } from "../src/utils/orders.js";
+import { canChangeOrderStatus, orderStatuses, restockOperations } from "../src/utils/orders.js";
 
 test("accepted order statuses remain explicit", () => {
   assert.deepEqual(orderStatuses, ["pending", "confirmed", "shipped", "delivered", "cancelled"]);
@@ -17,4 +17,12 @@ test("cancellation restores stock and only restores used discount quota", () => 
   assert.ok(discounted["discount.quantityUsed"]);
   assert.ok(regular.stock);
   assert.equal(regular["discount.quantityUsed"], undefined);
+});
+
+test("unverified online payments can only be cancelled", () => {
+  const online = { payment: "bkash", paymentVerified: false };
+  assert.equal(canChangeOrderStatus(online, "cancelled"), true);
+  assert.equal(canChangeOrderStatus(online, "confirmed"), false);
+  assert.equal(canChangeOrderStatus({ ...online, paymentVerified: true }, "confirmed"), true);
+  assert.equal(canChangeOrderStatus({ payment: "cod", paymentVerified: false }, "confirmed"), true);
 });

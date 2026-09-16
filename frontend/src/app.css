@@ -385,6 +385,9 @@ button:disabled {
 .low-stock-card h2 { margin:0; }
 .low-stock-card p { color:#644b20; }
 .order-view { display:inline-flex; align-items:center; gap:6px; padding:8px 10px; border:1px solid #c9d8d0; border-radius:8px; background:#fff; color:var(--green); font-weight:800; cursor:pointer; white-space:nowrap; }
+.payment-ok,.payment-waiting { width:max-content; margin-top:5px; padding:3px 7px; border-radius:999px; font-weight:800; }
+.payment-ok { background:#e2f7eb; color:#137448!important; }
+.payment-waiting { background:#fff0d2; color:#96640b!important; }
 .order-details-modal { position:relative; width:min(760px,100%); max-height:calc(100vh - 30px); overflow:auto; padding:30px; border-radius:20px; background:#fff; box-shadow:var(--shadow); }
 .order-details-modal .dialog-close { position:absolute; right:18px; top:14px; }
 .invoice-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-right:36px; border-bottom:1px solid var(--line); padding-bottom:18px; }
