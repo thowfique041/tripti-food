@@ -58,6 +58,33 @@ button:disabled {
 .review-stars { color:#d68d0a; }
 .admin-reviews article > div:last-child { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .danger-button { color:#a82d22; background:#fdecea; }
+footer { position:relative; padding-top:0; background:linear-gradient(145deg,#032b20 0%,#08271e 70%,#0b3327 100%); }
+.footer-cta { position:relative; top:-38px; display:flex; align-items:center; justify-content:space-between; gap:24px; padding:25px 30px; border:1px solid rgba(255,255,255,.18); border-radius:18px; background:linear-gradient(135deg,#d99a26,#e7b14d); color:#17211d; box-shadow:0 16px 45px rgba(0,0,0,.2); }
+.footer-cta span { font-size:14px; font-weight:800; letter-spacing:.04em; }
+.footer-cta h2 { margin:2px 0 0; font-size:27px; line-height:1.2; }
+.footer-cta > div:last-child { display:flex; gap:9px; flex-wrap:wrap; }
+.footer-cta a { display:flex; align-items:center; gap:7px; padding:11px 16px; border-radius:9px; font-weight:800; }
+.footer-call { background:#fff; color:var(--green); }
+.footer-whatsapp { background:#126c47; color:#fff; }
+footer .footer-grid { grid-template-columns:1.45fr .8fr 1fr 1fr; gap:55px; padding-top:15px; }
+footer .footer-grid > div { gap:10px; }
+footer .footer-grid h3 { position:relative; margin-bottom:13px; font-size:19px; }
+footer .footer-grid h3:after { content:""; position:absolute; left:0; bottom:-7px; width:32px; height:2px; border-radius:5px; background:var(--gold); }
+footer .footer-brand img { width:200px; height:70px; object-fit:contain; object-position:left; }
+footer .footer-brand > p { max-width:330px; margin:3px 0 7px; line-height:1.7; }
+.facebook-link { display:flex; align-items:center; gap:8px; color:#d8e8e1!important; font-weight:700; }
+.facebook-link > span { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:#1877f2; color:#fff!important; font:800 18px Arial; }
+.footer-links button { padding:0; border:0; background:transparent; color:#b7cdc4; cursor:pointer; text-align:left; }
+.footer-links a:hover,.footer-links button:hover,.footer-contact a:hover { color:#fff; transform:translateX(3px); }
+.footer-links a,.footer-links button,.footer-contact a { transition:.2s; }
+.footer-contact a,.footer-contact p { display:flex; align-items:flex-start; gap:9px; margin:0; }
+.footer-contact svg { flex:0 0 auto; margin-top:4px; color:#e9b64c; }
+.footer-payment > p { margin:0; }
+.footer-payment > div { display:flex; gap:7px; flex-wrap:wrap; }
+.footer-payment > div span { padding:6px 9px; border:1px solid rgba(255,255,255,.15); border-radius:7px; background:rgba(255,255,255,.08); color:#fff; font:800 12px "DM Sans",sans-serif; }
+.footer-payment small { display:flex; align-items:center; gap:7px; margin-top:8px; color:#b7cdc4; }
+footer .copyright { display:flex; justify-content:space-between; gap:20px; margin-top:45px; padding-top:20px; }
+footer .copyright p { margin:0; }
 
 /* Keep the previous price unmistakably separate from the current offer price. */
 .product-card .price-row {
@@ -566,6 +593,15 @@ button:disabled {
   .review-forms > form { grid-template-columns:1fr; }
   .review-forms form > strong,.review-forms form > label:nth-of-type(2) { grid-column:auto; }
   .admin-reviews article { flex-direction:column; }
+  .footer-cta { top:-28px; align-items:flex-start; flex-direction:column; padding:21px; }
+  .footer-cta h2 { font-size:23px; }
+  .footer-cta > div:last-child,.footer-cta a { width:100%; }
+  footer .footer-grid { grid-template-columns:1fr; gap:30px; }
+  footer .copyright { align-items:center; flex-direction:column; text-align:center; }
+}
+@media (min-width:581px) and (max-width:900px) {
+  footer .footer-grid { grid-template-columns:1fr 1fr; gap:35px; }
+  .footer-cta { align-items:flex-start; flex-direction:column; }
 }
 @media print {
   body * { visibility:hidden!important; }

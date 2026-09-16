@@ -34,6 +34,7 @@ import {
   Star,
   RotateCcw,
   ClipboardCheck,
+  Mail,
 } from "lucide-react";
 import { api } from "./api";
 import { fallbackProducts, defaultSettings } from "./data";
@@ -444,27 +445,38 @@ function Storefront() {
         </section>
       </main>
       <footer>
+        <div className="wrap footer-cta">
+          <div><span>বিশুদ্ধ খাবার, নিশ্চিন্ত কেনাকাটা</span><h2>প্রয়োজনে আমরা আছি আপনার পাশে</h2></div>
+          <div><a className="footer-call" href={`tel:${settings.phone}`}><Phone size={18} /> কল করুন</a><a className="footer-whatsapp" href={wa} target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp</a></div>
+        </div>
         <div className="wrap footer-grid">
-          <div>
+          <div className="footer-brand">
             <img src="/assets/logo.png" alt="তৃপ্তি ফুড" />
-            <p>Pure & Natural Food</p>
+            <p>বাছাই করা প্রাকৃতিক খাবার—স্বাদ, গুণমান ও বিশ্বাসের সঙ্গে পৌঁছে দিই আপনার পরিবারের কাছে।</p>
+            <a className="facebook-link" href="https://www.facebook.com/TriptiFoodsbd/" target="_blank" rel="noreferrer"><span>f</span> Facebook page</a>
           </div>
-          <div>
+          <div className="footer-links">
+            <h3>দ্রুত লিংক</h3>
+            <a href="#products">সব পণ্য</a>
+            <a href="#quality">আমাদের গল্প</a>
+            <a href="#faq">জিজ্ঞাসা ও নীতিমালা</a>
+            <button type="button" onClick={() => setTracking(true)}>অর্ডার ট্র্যাক করুন</button>
+          </div>
+          <div className="footer-contact">
             <h3>যোগাযোগ</h3>
-            <a href={`tel:${settings.phone}`}>{settings.phone}</a>
-            {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
-            <a href={wa}>WhatsApp</a>
-            <span>{settings.address}</span>
+            <a href={`tel:${settings.phone}`}><Phone size={17} /><span>{settings.phone}</span></a>
+            {settings.email && settings.email !== "admin@example.com" && <a href={`mailto:${settings.email}`}><Mail size={17} /><span>{settings.email}</span></a>}
+            <a href={wa} target="_blank" rel="noreferrer"><MessageCircle size={17} /><span>WhatsApp support</span></a>
+            <p><MapPin size={17} /><span>{settings.address}</span></p>
           </div>
-          <div>
-            <h3>তথ্য</h3>
-            <a href="#faq">ডেলিভারি ও পেমেন্ট</a>
-            <a href="/admin">Admin</a>
+          <div className="footer-payment">
+            <h3>পেমেন্ট ও ডেলিভারি</h3>
+            <p>নিরাপদ ও সহজ পেমেন্ট</p>
+            <div><span>COD</span><span>bKash</span><span>Nagad</span></div>
+            <small><Truck size={17} /> দেশজুড়ে courier delivery</small>
           </div>
         </div>
-        <p className="copyright">
-          © {new Date().getFullYear()} তৃপ্তি ফুড। সর্বস্বত্ব সংরক্ষিত।
-        </p>
+        <div className="wrap copyright"><p>© {new Date().getFullYear()} তৃপ্তি ফুড। সর্বস্বত্ব সংরক্ষিত।</p><p>Pure food · Honest service · Happy family</p></div>
       </footer>
       {drawer && (
         <>
