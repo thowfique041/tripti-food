@@ -22,6 +22,13 @@ import {
   CircleCheck,
   MapPin,
   Search,
+  Phone,
+  Eye,
+  Download,
+  Printer,
+  BadgeCheck,
+  AlertTriangle,
+  Users,
 } from "lucide-react";
 import { api } from "./api";
 import { fallbackProducts, defaultSettings } from "./data";
@@ -768,6 +775,7 @@ function Admin() {
     [notice, setNotice] = useState(""),
     [orderQuery, setOrderQuery] = useState(""),
     [orderStatus, setOrderStatus] = useState("all"),
+    [selectedOrder, setSelectedOrder] = useState(null),
     [module, setModule] = useState(() =>
       ["dashboard", "orders", "products", "settings"].includes(
         location.hash.slice(1),
@@ -882,6 +890,10 @@ function Admin() {
     );
   const pending = orders.filter((o) => o.status === "pending").length,
     stock = products.reduce((sum, p) => sum + Number(p.stock || 0), 0),
+    lowStock = products.filter((p) => p.active !== false && Number(p.stock) <= 5),
+    deliveredOrders = orders.filter((o) => o.status === "delivered"),
+    deliveredSales = deliveredOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
+    uniqueCustomers = new Set(orders.map((o) => o.customer?.phone).filter(Boolean)).size,
     titles = {
       dashboard: "ব্যবসার নিয়ন্ত্রণ",
       orders: "সাম্প্রতিক অর্ডার",
@@ -904,6 +916,17 @@ function Admin() {
         order.paymentDetails?.transactionId,
       ].some((value) => String(value || "").toLowerCase().includes(normalizedOrderQuery));
     });
+  function exportOrders() {
+    const cells = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const rows = [["Order", "Date", "Customer", "Phone", "Email", "Address", "Payment", "Payment verified", "Status", "Total"]];
+    filteredOrders.forEach((o) => rows.push([o.orderNumber, new Date(o.createdAt).toLocaleString("en-GB"), o.customer?.name, o.customer?.phone, o.customer?.email, o.customer?.address, o.payment, o.paymentVerified ? "Yes" : "No", orderStatusLabels[o.status], o.total]));
+    const blob = new Blob(["\uFEFF" + rows.map((row) => row.map(cells).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `tripti-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
   return (
     <main className="admin-shell">
       <aside className="admin-side">
@@ -975,7 +998,24 @@ function Admin() {
                 <strong>{bn(stock)}</strong>
                 <small>স্টক দেখুন</small>
               </button>
+              <button onClick={() => openModule("orders")}>
+                <span>সম্পন্ন বিক্রি</span>
+                <strong>{money(deliveredSales)}</strong>
+                <small>{bn(deliveredOrders.length)}টি delivered order</small>
+              </button>
+              <button onClick={() => openModule("orders")}>
+                <span>Guest ক্রেতা</span>
+                <strong>{bn(uniqueCustomers)}</strong>
+                <small>ফোন নম্বর অনুযায়ী</small>
+              </button>
             </div>
+            {lowStock.length > 0 && (
+              <div className="admin-card low-stock-card">
+                <div><AlertTriangle /><h2>Low stock সতর্কতা</h2></div>
+                <p>{lowStock.map((p) => `${p.name} (${bn(p.stock)})`).join(" · ")}</p>
+                <button className="button ghost" onClick={() => openModule("products")}>স্টক আপডেট করুন</button>
+              </div>
+            )}
             <div className="admin-card quick-links">
               <h2>দ্রুত কাজ</h2>
               <button
@@ -1003,6 +1043,7 @@ function Admin() {
                 <h2>সাম্প্রতিক অর্ডার</h2>
                 <p>নতুন অর্ডার দেখুন এবং ডেলিভারি স্ট্যাটাস পরিবর্তন করুন।</p>
               </div>
+              <button className="button ghost" type="button" onClick={exportOrders}><Download /> CSV Export</button>
             </div>
             <div className="order-filters" role="search">
               <label className="order-search">
@@ -1040,6 +1081,7 @@ function Admin() {
                     <th>মোট</th>
                     <th>পেমেন্ট</th>
                     <th>স্ট্যাটাস</th>
+                    <th>কাজ</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1079,11 +1121,14 @@ function Admin() {
                             ))}
                           </select>
                         </td>
+                        <td>
+                          <button className="order-view" type="button" onClick={() => setSelectedOrder(o)}><Eye size={17} /> বিস্তারিত</button>
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6">{orders.length ? "এই ফিল্টারে কোনো অর্ডার পাওয়া যায়নি।" : "এখনো কোনো অর্ডার নেই।"}</td>
+                      <td colSpan="7">{orders.length ? "এই ফিল্টারে কোনো অর্ডার পাওয়া যায়নি।" : "এখনো কোনো অর্ডার নেই।"}</td>
                     </tr>
                   )}
                 </tbody>
@@ -1235,7 +1280,49 @@ function Admin() {
           onSave={saveProduct}
         />
       )}
+      {selectedOrder && (
+        <OrderDetails
+          order={selectedOrder}
+          history={orders.filter((o) => o.customer?.phone === selectedOrder.customer?.phone)}
+          onClose={() => setSelectedOrder(null)}
+          onVerify={async (value) => {
+            const result = await api.verifyPayment(selectedOrder._id, value);
+            setSelectedOrder(result.order);
+            await load();
+          }}
+        />
+      )}
     </main>
+  );
+}
+function OrderDetails({ order, history, onClose, onVerify }) {
+  const mobilePayment = order.payment === "bkash" || order.payment === "nagad";
+  return (
+    <div className="modal-backdrop order-modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <section className="order-details-modal" role="dialog" aria-modal="true" aria-labelledby="order-details-title">
+        <button className="dialog-close" onClick={onClose} aria-label="বন্ধ করুন"><X /></button>
+        <div className="invoice-heading">
+          <img src="/assets/logo.png" alt="তৃপ্তি ফুড" />
+          <div><p>অর্ডার</p><h2 id="order-details-title">{order.orderNumber}</h2><small>{new Date(order.createdAt).toLocaleString("bn-BD")}</small></div>
+        </div>
+        <div className="order-detail-grid">
+          <article><h3>ক্রেতা ও ডেলিভারি</h3><p><strong>{order.customer?.name}</strong></p><p>{order.customer?.phone} · {order.customer?.email}</p><p>{order.customer?.address}</p><p>{order.customer?.area === "dhaka" ? "ঢাকার ভিতরে" : "ঢাকার বাইরে"}</p>{order.comment && <p className="customer-comment">মন্তব্য: {order.comment}</p>}</article>
+          <article><h3>পেমেন্ট</h3><p>{order.payment?.toUpperCase()}</p>{mobilePayment && <><p>পাঠানো নম্বর: <strong>{order.paymentDetails?.senderNumber}</strong></p><p>Transaction ID: <strong>{order.paymentDetails?.transactionId}</strong></p><button className={`verify-payment ${order.paymentVerified ? "verified" : ""}`} onClick={() => onVerify(!order.paymentVerified)}><BadgeCheck size={18} /> {order.paymentVerified ? "পেমেন্ট যাচাই হয়েছে" : "পেমেন্ট যাচাই করুন"}</button></>}</article>
+        </div>
+        <div className="invoice-items">
+          {order.items?.map((item, index) => <div key={`${item.product}-${index}`}><span>{item.name} × {bn(item.quantity)}</span><strong>{money(item.lineTotal)}</strong></div>)}
+          <div><span>পণ্যের মূল্য</span><strong>{money(order.subtotal)}</strong></div>
+          <div><span>ডেলিভারি</span><strong>{money(order.deliveryFee)}</strong></div>
+          <div className="invoice-total"><span>সর্বমোট</span><strong>{money(order.total)}</strong></div>
+        </div>
+        <div className="customer-history"><h3><Users size={18} /> একই ফোনে আগের অর্ডার</h3><p>মোট {bn(history.length)}টি · {money(history.reduce((sum, item) => sum + Number(item.total || 0), 0))}</p></div>
+        <div className="order-actions">
+          <a className="button ghost" href={`tel:${order.customer?.phone}`}><Phone /> কল করুন</a>
+          <a className="button whatsapp-action" target="_blank" rel="noreferrer" href={`https://wa.me/88${order.customer?.phone}?text=${encodeURIComponent(`আসসালামু আলাইকুম, তৃপ্তি ফুড থেকে আপনার ${order.orderNumber} অর্ডার সম্পর্কে যোগাযোগ করছি।`)}`}><MessageCircle /> WhatsApp</a>
+          <button className="button primary" onClick={() => window.print()}><Printer /> Invoice / Label</button>
+        </div>
+      </section>
+    </div>
   );
 }
 function ProductModal({ product, onClose, onSave }) {

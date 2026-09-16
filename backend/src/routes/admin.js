@@ -17,11 +17,16 @@ router.get("/orders", async (req, res, next) => {
 router.patch("/orders/:id", async (req, res, next) => {
   try {
     const status = req.body.status;
-    if (!validObjectId(req.params.id) || !orderStatuses.includes(status))
+    const hasPaymentVerified = typeof req.body.paymentVerified === "boolean";
+    if (!validObjectId(req.params.id) || (status !== undefined && !orderStatuses.includes(status)) || (status === undefined && !hasPaymentVerified))
       throw Object.assign(new Error("তথ্য সঠিক নয়।"), { status: 422 });
 
     const current = await Order.findById(req.params.id).lean();
     if (!current) throw Object.assign(new Error("অর্ডার পাওয়া যায়নি।"), { status: 404 });
+    if (status === undefined) {
+      const order = await Order.findByIdAndUpdate(req.params.id, { paymentVerified: req.body.paymentVerified }, { new: true, runValidators: true });
+      return res.json({ order });
+    }
     if (current.status === status) return res.json({ order: current });
     if (current.status === "cancelled")
       throw Object.assign(new Error("বাতিল অর্ডারের status আবার পরিবর্তন করা যাবে না।"), { status: 409 });
