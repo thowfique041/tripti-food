@@ -1,11 +1,11 @@
-# তৃপ্তি ফুড — MERN Stack
+# তৃপ্তি ফুড — MERN + TypeScript
 
-মোবাইল-ফার্স্ট বাংলা e-commerce website। React storefront এবং Node/Express/MongoDB backend আলাদা folder-এ রাখা হয়েছে।
+মোবাইল-ফার্স্ট বাংলা e-commerce website। React storefront এবং Node/Express/MongoDB backend সম্পূর্ণ TypeScript-এ, আলাদা folder-এ রাখা হয়েছে।
 
 ## Structure
 
-- `frontend/` — React + Vite storefront, cart, checkout ও admin dashboard
-- `backend/` — Express REST API, MongoDB models, JWT admin authentication ও tests
+- `frontend/` — React + TypeScript + Vite storefront, cart, checkout ও admin dashboard
+- `backend/` — TypeScript + Express REST API, MongoDB models, JWT admin authentication ও tests
 
 ## Features
 
@@ -20,6 +20,8 @@
 ## Local setup
 
 Node.js 20+ এবং local MongoDB প্রয়োজন।
+
+দুই folder-এই `npm run typecheck` দিয়ে TypeScript validation এবং `npm test` দিয়ে automated tests চালানো যায়।
 
 ### Backend
 

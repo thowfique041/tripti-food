@@ -1,4 +1,7 @@
-export function readCart(storageValue) {
+export type CartLine = { productId: string; quantity: number };
+export type CartProduct = { _id: string; slug: string; stock: number };
+
+export function readCart(storageValue: string | null): CartLine[] {
   try {
     const value = JSON.parse(storageValue || "[]");
     return Array.isArray(value) ? value : [];
@@ -7,11 +10,11 @@ export function readCart(storageValue) {
   }
 }
 
-export function reconcileCart(lines, products, fallbackProducts) {
+export function reconcileCart(lines: CartLine[], products: CartProduct[], fallbackProducts: CartProduct[]): CartLine[] {
   const fallbackById = new Map(fallbackProducts.map((product) => [product._id, product]));
   const productById = new Map(products.map((product) => [product._id, product]));
   const productBySlug = new Map(products.map((product) => [product.slug, product]));
-  const reconciled = new Map();
+  const reconciled = new Map<string, number>();
 
   for (const line of Array.isArray(lines) ? lines : []) {
     const fallback = fallbackById.get(line.productId);

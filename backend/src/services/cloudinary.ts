@@ -27,9 +27,9 @@ async function saveLocally(buffer, extension) {
   return { secure_url: `/uploads/${filename}`, public_id: filename, storage: "local" };
 }
 
-function uploadToCloudinary(buffer) {
+function uploadToCloudinary(buffer): Promise<any> {
   cloudinary.config({ cloud_name: config.cloudinaryCloudName, api_key: config.cloudinaryApiKey, api_secret: config.cloudinaryApiSecret, secure: true });
-  return new Promise((resolve, reject) => {
+  return new Promise<any>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream({ folder: "tripti-food/products", resource_type: "image", use_filename: true, unique_filename: true, overwrite: false, transformation: [{ width: 1400, height: 1400, crop: "limit", quality: "auto", fetch_format: "auto" }] }, (error, result) => error ? reject(error) : resolve(result));
     stream.end(buffer);
   });
@@ -43,7 +43,7 @@ export async function uploadProductImage(buffer, mimeType) {
   }
   try {
     return await uploadToCloudinary(buffer);
-  } catch (error) {
+  } catch (error: any) {
     if (config.nodeEnv !== "production" && Number(error.http_code) === 403) return saveLocally(buffer, extension);
     if ([401, 403].includes(Number(error.http_code))) throw Object.assign(new Error("Cloudinary credentials সঠিক নয়।"), { status: 502 });
     throw error;

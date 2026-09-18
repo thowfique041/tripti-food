@@ -589,7 +589,7 @@ function ProductDetails({ product, products, onOpen, onClose, onAdd }) {
     related = products.filter((item) => item._id !== product._id && item.category === product.category && item.stock > 0).slice(0, 3);
   useEffect(() => { api.reviews(product._id).then((data) => setReviews(data.reviews || [])).catch(() => setReviews([])); }, [product._id]);
   const offerEnds = price.offer?.endAt ? new Date(price.offer.endAt) : null,
-    offerTime = offerEnds && offerEnds > new Date() ? `${Math.max(1, Math.ceil((offerEnds - new Date()) / 86400000))} দিনের মধ্যে offer শেষ` : "";
+    offerTime = offerEnds && offerEnds > new Date() ? `${Math.max(1, Math.ceil((offerEnds.getTime() - Date.now()) / 86400000))} দিনের মধ্যে offer শেষ` : "";
   async function shareProduct() {
     const url = `${location.origin}${location.pathname}#product-${product._id}`;
     if (navigator.share) await navigator.share({ title: product.name, text: product.description, url }).catch(() => {});
@@ -626,7 +626,7 @@ function ProductDetails({ product, products, onOpen, onClose, onAdd }) {
 function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
   const [area, setArea] = useState("dhaka"),
     [payment, setPayment] = useState("cod"),
-    [message, setMessage] = useState(""),
+    [message, setMessage] = useState<any>(""),
     [busy, setBusy] = useState(false),
     [receipt, setReceipt] = useState(null),
     savedCustomer = JSON.parse(localStorage.getItem("tripti-customer") || "{}");
@@ -638,7 +638,7 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
     setBusy(true);
     setMessage("");
     const f = new FormData(e.currentTarget),
-      comment = f.get("comment").trim(),
+      comment = String(f.get("comment") || "").trim(),
       payload = {
         customer: {
           name: f.get("name"),
@@ -700,8 +700,8 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
               <input
                 name="name"
                 required
-                minLength="2"
-                maxLength="80"
+                minLength={2}
+                maxLength={80}
                 autoComplete="name"
                 defaultValue={savedCustomer.name || ""}
               />
@@ -724,7 +724,7 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
                 name="email"
                 type="email"
                 required
-                maxLength="120"
+                maxLength={120}
                 placeholder="name@example.com"
                 autoComplete="email"
                 defaultValue={savedCustomer.email || ""}
@@ -735,8 +735,8 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
               <textarea
                 name="address"
                 required
-                minLength="8"
-                maxLength="300"
+                minLength={8}
+                maxLength={300}
                 autoComplete="street-address"
                 defaultValue={savedCustomer.address || ""}
               />
@@ -787,8 +787,8 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
                   <input
                     name="transactionId"
                     required
-                    minLength="6"
-                    maxLength="24"
+                    minLength={6}
+                    maxLength={24}
                     pattern="[A-Za-z0-9-]{6,24}"
                     placeholder="যেমন: 9AB12C3DEF"
                     autoCapitalize="characters"
@@ -800,7 +800,7 @@ function Checkout({ items, settings, subtotal, onClose, onSuccess }) {
               অর্ডার সম্পর্কে মন্তব্য <span className="optional">(ঐচ্ছিক)</span>
               <textarea
                 name="comment"
-                maxLength="500"
+                maxLength={500}
                 autoComplete="off"
                 placeholder="বিশেষ নির্দেশনা থাকলে লিখুন"
               />
@@ -830,7 +830,7 @@ function OrderTracker({ onClose, onRepeat }) {
   const [order, setOrder] = useState(null), [message, setMessage] = useState(""), [reviewed, setReviewed] = useState([]), [lookupPhone, setLookupPhone] = useState("");
   async function lookup(event) {
     event.preventDefault(); const fields = new FormData(event.currentTarget); setMessage("খোঁজা হচ্ছে…");
-    try { const phone = fields.get("phone"); const data = await api.lookupOrder({ orderNumber: fields.get("orderNumber"), phone }); setLookupPhone(phone); setOrder(data.order); setMessage(""); }
+    try { const phone = String(fields.get("phone") || ""); const data = await api.lookupOrder({ orderNumber: String(fields.get("orderNumber") || ""), phone }); setLookupPhone(phone); setOrder(data.order); setMessage(""); }
     catch (error) { setOrder(null); setMessage(error.message); }
   }
   async function review(event, productId) {
@@ -838,7 +838,7 @@ function OrderTracker({ onClose, onRepeat }) {
     try { const data = await api.createReview({ orderNumber: order.orderNumber, phone: fields.get("phone"), productId, rating: Number(fields.get("rating")), comment: fields.get("comment") }); setReviewed((items) => [...items, String(productId)]); setMessage(data.message); }
     catch (error) { setMessage(error.message); }
   }
-  return <div className="modal-backdrop"><section className="tracking-modal"><button className="dialog-close" onClick={onClose}><X /></button><p className="eyebrow">Account ছাড়াই</p><h2>অর্ডার ট্র্যাক করুন</h2><form className="tracking-search" onSubmit={lookup}><label>Order number<input name="orderNumber" required placeholder="TF-..." /></label><label>অর্ডারের ফোন নম্বর<input name="phone" required pattern="01[3-9][0-9]{8}" placeholder="01XXXXXXXXX" /></label><button className="button primary"><Search size={18} /> খুঁজুন</button></form><p role="status">{message}</p>{order && <div className="tracking-result"><div className={`tracking-status status-${order.status}`}><ClipboardCheck /><div><small>বর্তমান অবস্থা</small><strong>{orderStatusLabels[order.status]}</strong></div></div><p><strong>{order.orderNumber}</strong> · {new Date(order.createdAt).toLocaleDateString("bn-BD")}</p><div className="tracking-items">{order.items.map((item, index) => <div key={index}><span>{item.name} × {bn(item.quantity)}</span><strong>{money(item.lineTotal)}</strong></div>)}</div>{order.courier?.trackingId && <div className="public-courier"><strong>{order.courier.company}</strong><span>Tracking ID: {order.courier.trackingId}</span>{order.courier.trackingUrl && <a className="button ghost" href={order.courier.trackingUrl} target="_blank" rel="noreferrer"><Truck size={17} /> Track parcel</a>}</div>}<button className="button primary" onClick={() => onRepeat(order)}><RotateCcw size={17} /> আবার order করুন</button>{order.status === "delivered" && <div className="review-forms"><h3>পণ্য review করুন</h3>{order.items.map((item) => reviewed.includes(String(item.product)) ? <p key={String(item.product)}>✓ {item.name}-এর review জমা হয়েছে</p> : <form key={String(item.product)} onSubmit={(event) => review(event, String(item.product))}><strong>{item.name}</strong><input type="hidden" name="phone" value={lookupPhone} /><label>Rating<select name="rating" defaultValue="5"><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></label><label>মতামত<textarea name="comment" required minLength="3" maxLength="500" /></label><button className="button ghost"><Star size={17} /> জমা দিন</button></form>)}</div>}</div>}</section></div>;
+  return <div className="modal-backdrop"><section className="tracking-modal"><button className="dialog-close" onClick={onClose}><X /></button><p className="eyebrow">Account ছাড়াই</p><h2>অর্ডার ট্র্যাক করুন</h2><form className="tracking-search" onSubmit={lookup}><label>Order number<input name="orderNumber" required placeholder="TF-..." /></label><label>অর্ডারের ফোন নম্বর<input name="phone" required pattern="01[3-9][0-9]{8}" placeholder="01XXXXXXXXX" /></label><button className="button primary"><Search size={18} /> খুঁজুন</button></form><p role="status">{message}</p>{order && <div className="tracking-result"><div className={`tracking-status status-${order.status}`}><ClipboardCheck /><div><small>বর্তমান অবস্থা</small><strong>{orderStatusLabels[order.status]}</strong></div></div><p><strong>{order.orderNumber}</strong> · {new Date(order.createdAt).toLocaleDateString("bn-BD")}</p><div className="tracking-items">{order.items.map((item, index) => <div key={index}><span>{item.name} × {bn(item.quantity)}</span><strong>{money(item.lineTotal)}</strong></div>)}</div>{order.courier?.trackingId && <div className="public-courier"><strong>{order.courier.company}</strong><span>Tracking ID: {order.courier.trackingId}</span>{order.courier.trackingUrl && <a className="button ghost" href={order.courier.trackingUrl} target="_blank" rel="noreferrer"><Truck size={17} /> Track parcel</a>}</div>}<button className="button primary" onClick={() => onRepeat(order)}><RotateCcw size={17} /> আবার order করুন</button>{order.status === "delivered" && <div className="review-forms"><h3>পণ্য review করুন</h3>{order.items.map((item) => reviewed.includes(String(item.product)) ? <p key={String(item.product)}>✓ {item.name}-এর review জমা হয়েছে</p> : <form key={String(item.product)} onSubmit={(event) => review(event, String(item.product))}><strong>{item.name}</strong><input type="hidden" name="phone" value={lookupPhone} /><label>Rating<select name="rating" defaultValue="5"><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></label><label>মতামত<textarea name="comment" required minLength={3} maxLength={500} /></label><button className="button ghost"><Star size={17} /> জমা দিন</button></form>)}</div>}</div>}</section></div>;
 }
 function Admin() {
   const [token, setToken] = useState(
@@ -957,7 +957,7 @@ function Admin() {
                 name="password"
                 type="password"
                 required
-                minLength="8"
+                minLength={8}
                 autoComplete="current-password"
               />
             </label>
@@ -1222,7 +1222,7 @@ function Admin() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="7">{orders.length ? "এই ফিল্টারে কোনো অর্ডার পাওয়া যায়নি।" : "এখনো কোনো অর্ডার নেই।"}</td>
+                      <td colSpan={7}>{orders.length ? "এই ফিল্টারে কোনো অর্ডার পাওয়া যায়নি।" : "এখনো কোনো অর্ডার নেই।"}</td>
                     </tr>
                   )}
                 </tbody>
@@ -1300,7 +1300,7 @@ function Admin() {
             >
               <label>
                 ইমেইল
-                <input name="email" type="email" required maxLength="120" defaultValue={settings.email || ""} />
+                <input name="email" type="email" required maxLength={120} defaultValue={settings.email || ""} />
               </label>
               <label>
                 ফোন
@@ -1356,11 +1356,11 @@ function Admin() {
             >
               <label>
                 বর্তমান password
-                <input name="currentPassword" type="password" required minLength="8" maxLength="128" autoComplete="current-password" />
+                <input name="currentPassword" type="password" required minLength={8} maxLength={128} autoComplete="current-password" />
               </label>
               <label>
                 নতুন password
-                <input name="newPassword" type="password" required minLength="12" maxLength="128" autoComplete="new-password" />
+                <input name="newPassword" type="password" required minLength={12} maxLength={128} autoComplete="new-password" />
               </label>
               <button className="button primary"><Save /> Password পরিবর্তন</button>
             </form>
@@ -1431,8 +1431,8 @@ function OrderDetails({ order, history, onClose, onVerify, onCourier }) {
         <form className="courier-form" onSubmit={saveCourier}>
           <h3><Truck size={19} /> Courier tracking</h3>
           <label>Courier company<select name="company" required defaultValue={order.courier?.company || ""}><option value="" disabled>নির্বাচন করুন</option><option>Pathao</option><option>Steadfast</option><option>RedX</option><option>Paperfly</option><option>Sundarban</option><option>SA Paribahan</option><option>অন্যান্য</option></select></label>
-          <label>Tracking / Consignment ID<input name="trackingId" required maxLength="80" defaultValue={order.courier?.trackingId || ""} /></label>
-          <label>Tracking link <span className="optional">(ঐচ্ছিক)</span><input name="trackingUrl" type="url" placeholder="https://..." maxLength="500" defaultValue={order.courier?.trackingUrl || ""} /></label>
+          <label>Tracking / Consignment ID<input name="trackingId" required maxLength={80} defaultValue={order.courier?.trackingId || ""} /></label>
+          <label>Tracking link <span className="optional">(ঐচ্ছিক)</span><input name="trackingUrl" type="url" placeholder="https://..." maxLength={500} defaultValue={order.courier?.trackingUrl || ""} /></label>
           <label>Courier charge<input name="charge" type="number" min="0" max="100000" defaultValue={order.courier?.charge || 0} /></label>
           <label>পাঠানোর তারিখ <span className="optional">(ঐচ্ছিক)</span><input name="shippedAt" type="date" defaultValue={order.courier?.shippedAt ? new Date(order.courier.shippedAt).toISOString().slice(0, 10) : ""} /></label>
           <button className="button primary"><Save /> সংরক্ষণ</button>
@@ -1488,7 +1488,7 @@ function ProductModal({ product, onClose, onSave }) {
         <form onSubmit={onSave} className="settings-form">
           <label>
             নাম
-            <input name="name" required minLength="2" maxLength="100" autoComplete="off" defaultValue={product.name} />
+            <input name="name" required minLength={2} maxLength={100} autoComplete="off" defaultValue={product.name} />
           </label>
           <label>
             Slug
@@ -1550,8 +1550,8 @@ function ProductModal({ product, onClose, onSave }) {
             <textarea
               name="description"
               required
-              minLength="5"
-              maxLength="600"
+              minLength={5}
+              maxLength={600}
               autoComplete="off"
               defaultValue={product.description}
             />

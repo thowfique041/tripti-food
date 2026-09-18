@@ -28,7 +28,7 @@ export function adminProduct(product,now=new Date()){
 }
 
 export function activeDiscountQuery(product,quantity,now=new Date()){
-  const query={_id:product._id,active:true,stock:{$gte:quantity},"discount.enabled":true,$and:[{$or:[{"discount.startAt":null},{"discount.startAt":{$lte:now}}]},{$or:[{"discount.endAt":null},{"discount.endAt":{$gt:now}}]}]};
+  const query:any={_id:product._id,active:true,stock:{$gte:quantity},"discount.enabled":true,$and:[{$or:[{"discount.startAt":null},{"discount.startAt":{$lte:now}}]},{$or:[{"discount.endAt":null},{"discount.endAt":{$gt:now}}]}]};
   if(product.discount.quantityLimit!=null)query.$expr={$lte:[{$add:[{$ifNull:["$discount.quantityUsed",0]},quantity]},"$discount.quantityLimit"]};
   return query;
 }

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import { config } from "../config.js";
 import Admin from "../models/Admin.js";
 import { requireAdmin } from "../middleware/auth.js";
@@ -18,7 +18,7 @@ router.post("/login", async (req, res, next) => {
 
     admin.lastLoginAt = new Date();
     await admin.save();
-    const token = jwt.sign({ sub: String(admin._id), role: "admin", ver: admin.tokenVersion || 0 }, config.jwtSecret, { algorithm: "HS256", expiresIn: config.jwtExpiresIn });
+    const token = jwt.sign({ sub: String(admin._id), role: "admin", ver: admin.tokenVersion || 0 }, config.jwtSecret, { algorithm: "HS256", expiresIn: config.jwtExpiresIn as SignOptions["expiresIn"] });
     res.json({ token });
   } catch (error) {
     next(error);
@@ -33,7 +33,7 @@ router.put("/password", requireAdmin, async (req, res, next) => {
       return res.status(422).json({ message: "নতুন password ১২–১২৮ অক্ষরের হতে হবে।" });
     if (currentPassword === newPassword)
       return res.status(422).json({ message: "নতুন password আগের password থেকে আলাদা হতে হবে।" });
-    const admin = await Admin.findById(req.admin._id).select("+passwordHash +tokenVersion");
+    const admin = await Admin.findById(req.admin?._id).select("+passwordHash +tokenVersion");
     if (!admin || !(await bcrypt.compare(currentPassword, admin.passwordHash)))
       return res.status(401).json({ message: "বর্তমান password সঠিক নয়।" });
     admin.passwordHash = await bcrypt.hash(newPassword, 12);

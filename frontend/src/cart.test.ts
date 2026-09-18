@@ -18,6 +18,6 @@ describe("cart persistence", () => {
 
   it("drops stale products and invalid quantities", () => {
     expect(reconcileCart([{ productId: "missing", quantity: 1 }], products, fallback)).toEqual([]);
-    expect(reconcileCart([{ productId: "demo-1", quantity: "NaN" }], products, fallback)).toEqual([]);
+    expect(reconcileCart([{ productId: "demo-1", quantity: "NaN" as any }], products, fallback)).toEqual([]);
   });
 });
